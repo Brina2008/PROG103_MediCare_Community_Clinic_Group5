@@ -342,7 +342,7 @@ def open_summary_dashboard(parent):
 
 def main():
     root = ttk.Window(themename="flatly")
-    root.title("MediCare Community Clinic - Sierra Leone")
+    root.title("MediCare SDG 3 Patient Queue System")
     try:
         root.state("zoomed")
     except:
