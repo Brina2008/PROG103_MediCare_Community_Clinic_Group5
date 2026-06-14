@@ -66,17 +66,19 @@ def ok_time(t):
 
 #  Added - staff accounts (receptionist + nurse) 
 staff_accounts = {}
- 
+
 last_called = [None]
 
 # Added - avg minutes per patient for wait estimate
 AVG_MIN = 5
 
-# Added - complaint minimum length
-def ok_complaint(t): return bool(t.strip()) and not t.strip().isdigit() and len(t.strip()) >= 3
+def ok_complaint(t): 
+    """Complaint must be at least 3 characters and not purely numeric"""
+    return bool(t.strip()) and not t.strip().isdigit() and len(t.strip()) >= 3
 
-# Added: contact number validation
-def ok_contact(t): return t.isdigit() and 7 <= len(t) <= 15
+def ok_contact(t):
+    """Contact must be digits only, 7-15 characters""" 
+    return t.isdigit() and 7 <= len(t) <= 15
 
 # Added - gender & contact stored on patient
 def register_patient_full(name, age, gender, contact, complaint, arrived, category):
@@ -134,7 +136,8 @@ def served_summary():
     return counts
 
 # Added - CSV export & auto backup
-FIELDNAMES = ["id","name","age","gender","contact","complaint","arrived","category","queue_no","status"]
+FIELDNAMES = ["id","name","age","gender","contact","complaint",
+              "arrived","category","queue_no","status"]
 
 def save_to_csv(filename):
     with open(filename, "w", newline="") as f:
@@ -152,6 +155,7 @@ def export_csv():
     messagebox.showinfo("Exported", "Records saved to export.csv")
 
 def auto_backup():
+    """Automatically save a dated backup file when the program closes"""
     date_str = datetime.now().strftime("%Y_%m_%d")
     save_to_csv(f"backup_{date_str}.csv")
 
@@ -212,7 +216,7 @@ def show_login_screen(root, on_success):
         if staff_accounts[u]["password"] != p:
             err.config(text="Incorrect password."); return
         if staff_accounts[u]["role"] != r:
-            err.config(text=f"This account is registered as {staff_accounts[u]['role']}."); return
+            err.config(text=f"This account is registered as {staff_accounts[u]['role']}"); return
         win.destroy()          
         on_success(root, u, r)
 
@@ -225,7 +229,7 @@ def show_login_screen(root, on_success):
         if u in staff_accounts:
             err.config(text="Username already taken. Choose another"); return
         staff_accounts[u] = {"password": p, "role": r}
-        err.config(text=f"{r} '{u}' registered successfully. You can now log in.")
+        err.config(text=f"{r} '{u}' registered successfully, You can now log in")
 
     btn = ttk.Frame(frm)
     btn.grid(row=4, column=0, columnspan=2, pady=20)
@@ -279,8 +283,8 @@ def open_edit_dashboard(parent):
 
     def do_search():
         p = find_by_id(sid.get())
-        if not p: err.config(text="!!! Patient ID not found"); return
-        if p in served: err.config(text="Cannot edit a served patient."); return
+        if not p: err.config(text="Patient ID not found"); return
+        if p in served: err.config(text="Cannot edit a served patient"); return
         found[0] = p
         nv.set(p["name"]); av.set(str(p["age"]))
         gv.set(p.get("gender", "Male")); ctv.set(p.get("contact", ""))
@@ -288,7 +292,7 @@ def open_edit_dashboard(parent):
         err.config(text="")
 
     def do_update():
-        if not found[0]: err.config(text="Search for a patient first."); return
+        if not found[0]: err.config(text="Search for a patient first"); return
         n, a, ct, c, t, g, k = (nv.get().strip(), av.get().strip(),
                                   ctv.get().strip(), cv.get().strip(),
                                   tv.get().strip(), gv.get(), kv.get())
@@ -363,16 +367,24 @@ def open_queue_dashboard(parent):
         tree.delete(*tree.get_children())
         if not patients:
             tree.insert("", END, values=("-", "-", "No patients waiting", "-", "-", "-", " -", "-"))
-            return
-        for i, p in enumerate(patients, 1):
-            tag = ("next" if i == 1 else
+        else:
+            for i, p in enumerate(patients, 1):
+                tag = ("next" if i == 1 else
                    "emerg" if p["category"] == "Emergency" else
                    "preg"  if p["category"] == "Pregnant"  else "")
             wait = f"{i * AVG_MIN} min" 
             tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
                         p["category"], p["arrived"], p["complaint"], wait), tags=(tag,))
+            
             if win.winfo_exists():
                 win.after(10000, refresh)
+
+    def undo_call():  # Added - restore accidental call
+        if undo_last_call():
+            messagebox.showinfo("Restored", "Last called patient returned to queue")
+            refresh()
+        else:
+            messagebox.showwarning("Nothing to Undo", "No recent call to restore")        
 
     def call_next():
         if not patients:
@@ -382,28 +394,14 @@ def open_queue_dashboard(parent):
             f"Call: {p['name']}  ({p['category']})\nComplaint: {p['complaint']}"): return
         called = call_next_patient()
         last_called[0] = called
-        nxt = f"Next: {patients[0]['name']} ({patients[0]['category']})" if patients else "Queue is now empty"
+        nxt = (f"Next: {patients[0]['name']} ({patients[0]['category']})" 
+                if patients else "Queue is now empty")
         messagebox.showinfo("Now Calling",
             f"{called['name'].upper()} - Ticket #{called['queue_no']}\n"
             f"Category : {called['category']}\nComplaint: {called['complaint']}\n\n{nxt}")
         refresh()
 
-    btn = ttk.Frame(win); btn.pack(pady=8)
-    ttk.Button(btn, text="Call Next", command=call_next,
-               bootstyle="success", width=16).pack(side=LEFT, padx=6)
-    ttk.Button(btn, text="Refresh",  command=refresh,
-               bootstyle="info-outline", width=14).pack(side=LEFT, padx=6)
-    ttk.Button(btn, text="Close",        command=win.destroy,
-               bootstyle="secondary-outline", width=10).pack(side=LEFT, padx=6)
-    refresh()
-
-    def undo_call():  # Added - restore accidental call
-        if undo_last_call():
-            messagebox.showinfo("Restored", "Last called patient returned to queue")
-            refresh()
-        else:
-            messagebox.showwarning("Nothing to Undo", "No recent call to restore")
-
+# Remove duplicate button row
     btn = ttk.Frame(win); btn.pack(pady=8)
     ttk.Button(btn, text="Call Next",  command=call_next,
                bootstyle="success",         width=14).pack(side=LEFT, padx=5)
@@ -428,8 +426,7 @@ def open_register_dashboard(parent, on_done):
 
     frm = ttk.Frame(win, padding=16); frm.pack(fill=BOTH, expand=True)
 
-    nv = tk.StringVar(); 
-    av = tk.StringVar()
+    nv = tk.StringVar();  av  = tk.StringVar()
     gv = tk.StringVar(value = "Male")
     ctv = tk.StringVar()
     cv = tk.StringVar() 
@@ -437,10 +434,10 @@ def open_register_dashboard(parent, on_done):
     kv = tk.StringVar(value="Normal")
 
     for i, (lbl, var) in enumerate([("Full Name", nv), 
-                                    ("Age", av),
-                                    ("Contact Number", ctv),
-                                    ("Complaint", cv), 
-                                    ("Arrived (HH:MM)", tv)]):
+                                     ("Age", av),
+                                     ("Contact Number", ctv),
+                                     ("Complaint", cv), 
+                                     ("Arrived (HH:MM)", tv)]):
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=5)
         ttk.Entry(frm, textvariable=var, width=28).grid(
             row=i, column=1, pady=6, padx=(8, 0))
@@ -470,13 +467,13 @@ def open_register_dashboard(parent, on_done):
 
     def submit():
         n, a, ct, c, t, k = (nv.get().strip(), av.get().strip(),
-                              ctv.get().strip, cv.get().strip(), 
+                              ctv.get().strip(), cv.get().strip(), 
                               tv.get().strip(), kv.get())
-        for ok, msg in [(ok_name(n), "!!! Name: letters only"),
-                        (ok_age(a),  "!!! Age: 0-120"),
-                        (ok_contact(ct),  "!!! Contact: digits only, 7-15 numbers"),  
-                        (ok_complaint(c), "!!! Complaint: at least 3 characters"),  
-                        (ok_time(t), "!!! Time must be HH:MM")]:
+        for ok, msg in [(ok_name(n), "Name: letters only"),
+                        (ok_age(a),  "Age: 0-120"),
+                        (ok_contact(ct),  "Contact: digits only, 7-15 numbers"),  
+                        (ok_complaint(c), "Complaint: at least 3 characters"),  
+                        (ok_time(t), "Time must be HH:MM")]:
             if not ok: err.config(text=msg); return
 
         pid = register_patient_full(n, int(a), gv.get(), ct, c, t, k) 
@@ -515,9 +512,12 @@ def open_search_dashboard(parent):
                  font=("Tahoma", 10, "bold"), relief="flat")
     s2.map("Search.Treeview.Heading", background=[("active", "#0d6eaa")])
     s2.configure("Search.Treeview", rowheight=26)
-    tree   = ttk.Treeview(frame, columns=cols, show="headings", height=12, style="Search.Treeview")
+    tree   = ttk.Treeview(frame, columns=cols, show="headings", 
+                          height=12, style="Search.Treeview")
+    
     for c, w in zip(cols, widths):
-        tree.heading(c, text=c); tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
+        tree.heading(c, text=c); 
+        tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
     tree.column("Name",      anchor=W, stretch=True)
     tree.column("Complaint", anchor=W, stretch=True)
     sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
@@ -536,7 +536,8 @@ def open_search_dashboard(parent):
             status = "Waiting" if p in patients else "Served"
             tree.insert("", END, values=(p["id"], p["name"], p["age"],
                         p["category"], p["arrived"], p["complaint"], status))
-        info.config(text=f"{len(res)} result(s) found." if res else f"No match for '{term}'.")
+        info.config(text=f"{len(res)} result(s) found." if res 
+                    else f"No match for '{term}'.")
 
     sv.trace_add("write", do_search)
     ttk.Button(win, text="Close", command=win.destroy,
@@ -590,19 +591,19 @@ def open_served_dashboard(parent):
 
     def clear_served(): 
         if not served:
-            messagebox.showinfo("Empty", "No served patients to clear."); return
+            messagebox.showinfo("Empty", "No served patients to clear"); return
         if messagebox.askyesno("Confirm Clear",
-            f"Clear all {len(served)} served records?\nThis cannot be undone."):
+            f"Clear all {len(served)} served records?\nThis cannot be undone"):
             served.clear()
             last_called[0] = None
             load_served()
-            messagebox.showinfo("Cleared", "Served patients list cleared.")
+            messagebox.showinfo("Cleared", "Served patients list cleared")
 
     load_served()
     btn = ttk.Frame(win); btn.pack(pady=8)
-    ttk.Button(btn, text="Clear Served", command=clear_served,  #Added
+    ttk.Button(btn, text="Clear Served", command=clear_served,  
                bootstyle="danger-outline",   width=16).pack(side=LEFT, padx=6)
-    ttk.Button(btn, text="Export CSV",   command=export_csv,    # Added
+    ttk.Button(btn, text="Export CSV",   command=export_csv,   
                bootstyle="success-outline",  width=14).pack(side=LEFT, padx=6)
     ttk.Button(btn, text="Close",        command=win.destroy,
                bootstyle="secondary-outline", width=10).pack(side=LEFT, padx=6)
@@ -618,7 +619,7 @@ def open_summary_dashboard(parent):
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 10))
 
     counts  = queue_summary()
-    scounts = served_summary()  # Added
+    scounts = served_summary() 
     avg_w   = round(len(patients) / max(1, len(patients) + len(served)), 2)  
     
     frame = ttk.Frame(win, padding=(12, 0)); frame.pack(fill=BOTH, expand=True, padx=12)
@@ -736,7 +737,7 @@ def main_window(root, username, role):  # Added - reuses the single root window
         ("Register Patient",  "success",          open_register),
         ("View Queue",        "primary",          lambda: open_queue_dashboard(root)),
         ("Search Patient",    "info",             lambda: open_search_dashboard(root)),
-        ("Edit / Delete",     "warning-outline",   lambda: open_edit_dashboard(root)),   # ADDED
+        ("Edit / Delete",     "warning-outline",   lambda: open_edit_dashboard(root)),   # Added
         ("Served Patients",   "success-outline",  lambda: open_served_dashboard(root)),
         ("Summary",           "secondary-outline",lambda: open_summary_dashboard(root)),
     ]
