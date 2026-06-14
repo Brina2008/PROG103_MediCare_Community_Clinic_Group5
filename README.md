@@ -1,8 +1,6 @@
 # 🏥 MediQueue – Patient Queue Management System
 
-A Python-based GUI application designed to manage patient queues in community clinics across Sierra Leone. Built using Tkinter and ttkbootstrap, the system supports efficient patient registration, prioritization, queue management, and reporting while aligning with SDG 3 (Good Health and Well-being).
-
----
+MediQueue is a Python GUI application that helps manage patient queues efficiently while supporting SDG 3 (Good Health and Well-being).
 
 ## 📌 Overview
 
@@ -10,7 +8,7 @@ MediQueue is a desktop application developed for healthcare facilities to improv
 
 This project was developed as a final submission for the Principles of Structured Programming course and demonstrates the use of structured programming concepts, GUI design, input validation, and real-world problem-solving.
 
----
+
 
 ## 🎯 Sustainable Development Goal
 
@@ -18,7 +16,7 @@ This project was developed as a final submission for the Principles of Structure
 
 MediQueue supports quality healthcare delivery by improving patient organization, reducing waiting times, and ensuring emergency cases receive priority attention.
 
----
+
 
 ## ✨ Features
 
@@ -80,7 +78,7 @@ MediQueue supports quality healthcare delivery by improving patient organization
 * Automatic daily backup generation
 * In-memory storage using Python lists and dictionaries
 
----
+
 
 ## 🌍 Real-World Impact
 
@@ -92,14 +90,14 @@ Prioritizing emergency cases
 Enhancing healthcare service delivery
 Supporting digital transformation in healthcare
 
----
+
 
 ## 👥 Authors
 
 * Sabrina Kandeh
 * Ameynor Salma Kamara
 * Alfreda Victoria Dumbuya
----
+
 
 ## 🧰 Technology Stack
 
@@ -109,13 +107,13 @@ GUI Theme Library: ttkbootstrap
 Data Storage: Python Lists and Dictionaries
 Data Export: CSV Files
 
----
+
 
 ## 📄 License
 
 This project is licensed under the MIT License. See the LICENSE.md file for details.
 
----
+
 
 ## 🚀 How to Run the Project
 
@@ -134,6 +132,6 @@ pip install ttkbootstrap
 ```bash
 python main.py
 ```
----
+
 
 **MediQueue – Improving Patient Flow for Better Healthcare in Sierra Leone 🇸🇱**
