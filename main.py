@@ -338,8 +338,8 @@ def open_queue_dashboard(parent):
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10)
 
-    cols   = ("#", "ID", "Name", "Age", "Category", "Arrived", "Complaint", "Est. Wait") 
-    widths = [50,   70,   150,    50,      100,       80,         170,           90]
+    cols   = ("#",   "ID",   "Name",  "Age",  "Category", "Arrived", "Complaint", "Est. Wait") 
+    widths = [50,     70,     160,     50,       100,         80,         180,           90]
 
     frame = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
     tree = ttk.Treeview(frame, columns=cols, show="headings", height=12)
