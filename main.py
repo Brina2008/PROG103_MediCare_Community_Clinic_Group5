@@ -9,7 +9,7 @@ from ttkbootstrap.constants import *
 from datetime import datetime
 import csv,os
 
-# IN-MEMORY DATA
+# In-Memory Data
 patients = []   # list of patient dicts
 served   = []   # list of served patient dicts
 counter  = [1]  # patient ID counter
@@ -335,7 +335,7 @@ def open_queue_dashboard(parent):
     ttk.Separator(win).pack(fill=X, padx=10)
 
     cols   = ("#", "ID", "Name", "Age", "Category", "Arrived", "Complaint", "Est. Wait") 
-    widths = [60,  80,   160,    50,    109,        170,        90]
+    widths = [50,   70,   150,    50,      100,       80,         170,           90]
 
     frame = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
     tree = ttk.Treeview(frame, columns=cols, show="headings", height=12)
@@ -362,7 +362,7 @@ def open_queue_dashboard(parent):
     def refresh():
         tree.delete(*tree.get_children())
         if not patients:
-            tree.insert("", END, values=("-", "-", "No patients waiting", "-", "-", "-", " -"))
+            tree.insert("", END, values=("-", "-", "No patients waiting", "-", "-", "-", " -", "-"))
             return
         for i, p in enumerate(patients, 1):
             tag = ("next" if i == 1 else
@@ -370,7 +370,7 @@ def open_queue_dashboard(parent):
                    "preg"  if p["category"] == "Pregnant"  else "")
             wait = f"{i * AVG_MIN} min" 
             tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
-                        p["category"], p["arrived"], p["complaint"]), tags=(tag,))
+                        p["category"], p["arrived"], p["complaint"], wait), tags=(tag,))
             if win.winfo_exists():
                 win.after(10000, refresh)
 
@@ -428,10 +428,11 @@ def open_register_dashboard(parent, on_done):
 
     frm = ttk.Frame(win, padding=16); frm.pack(fill=BOTH, expand=True)
 
-    nv = tk.StringVar(); av = tk.StringVar()
+    nv = tk.StringVar(); 
+    av = tk.StringVar()
     gv = tk.StringVar(value = "Male")
     ctv = tk.StringVar()
-    cv = tk.StringVar(); 
+    cv = tk.StringVar() 
     tv = tk.StringVar(value=datetime.now().strftime("%H:%M"))
     kv = tk.StringVar(value="Normal")
 
@@ -444,19 +445,20 @@ def open_register_dashboard(parent, on_done):
         ttk.Entry(frm, textvariable=var, width=28).grid(
             row=i, column=1, pady=6, padx=(8, 0))
 
-    ttk.Label(frm, text="Gender:").grid(row=4, column=0, sticky=W, pady=5)
-    cat_cb = ttk.Combobox(frm, textvariable=kv, width=26, state="readonly",
-                 values=["Emergency", "Pregnant", "Normal"])
-    
+    ttk.Label(frm, text="Gender:").grid(row=5, column=0, sticky=W, pady=5)
     gender_cb = ttk.Combobox(frm, textvariable=gv, width=26, state="readonly", 
-                             values=["Emergency", "Pregnant", "Normal"])
+                             values=["Male", "Female"])
     gender_cb.grid(row=5, column=1, pady=5, padx=(8, 0))
 
+    # Category now uses row 6
     ttk.Label(frm, text="Category:").grid(row=6, column=0, sticky=W, pady=5)
+    cat_cb = ttk.Combobox(frm, textvariable=kv, width=26, state="readonly",
+                 values=["Emergency", "Pregnant", "Normal"])
     cat_cb.grid(row=6, column=1, pady=5, padx=(8, 0))
 
+    # error label moved to row 7 (was overlapping gender_cb)
     err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 9))
-    err.grid(row=5, column=0, columnspan=2, pady=2)
+    err.grid(row=7, column=0, columnspan=2, pady=2)
 
     def on_gender_change(*_):  # Added - block male from Pregnant
         if gv.get() == "Male":
@@ -473,8 +475,7 @@ def open_register_dashboard(parent, on_done):
         for ok, msg in [(ok_name(n), "!!! Name: letters only"),
                         (ok_age(a),  "!!! Age: 0-120"),
                         (ok_contact(ct),  "!!! Contact: digits only, 7-15 numbers"),  
-                        (ok_complaint(c), "!!! Complaint: at least 3 characters"),   
-                        (ok_note(c), "!!! Enter a complaint"),
+                        (ok_complaint(c), "!!! Complaint: at least 3 characters"),  
                         (ok_time(t), "!!! Time must be HH:MM")]:
             if not ok: err.config(text=msg); return
 
@@ -685,12 +686,12 @@ def main_window(root, username, role):  # Added - reuses the single root window
     hdr = ttk.Frame(root, bootstyle="primary", padding=(14, 8))
     hdr.pack(fill=X)
     ttk.Label(hdr, text="MediCare Community Clinic - Sierra Leone",
-              font=("Helvetica", 12, "bold"),
+              font=("Tahoma", 12, "bold"),
               bootstyle="inverse-primary").pack(side=LEFT)
     ttk.Label(hdr, text=f"  {role}: {username}", 
-              font=("Helvetica", 10),
+              font=("Tahoma", 10),
               bootstyle="inverse-primary").pack(side=LEFT, padx=16)
-    clk = ttk.Label(hdr, text="", font=("Helvetica", 10),
+    clk = ttk.Label(hdr, text="", font=("Tahoma", 10),
                     bootstyle="inverse-primary")
     clk.pack(side=RIGHT)
 
