@@ -1,4 +1,4 @@
-# 🏥 MediQueue – Patient Queue Management System
+# 🏥 MediQueue - Patient Queue Management System
 
 MediQueue is a Python GUI application that helps manage patient queues efficiently while supporting SDG 3 (Good Health and Well-being).
 
@@ -12,7 +12,7 @@ This project was developed as a final submission for the Principles of Structure
 
 ## 🎯 Sustainable Development Goal
 
-**SDG 3 – Good Health and Well-being**
+**SDG 3 - Good Health and Well-being**
 
 MediQueue supports quality healthcare delivery by improving patient organization, reducing waiting times, and ensuring emergency cases receive priority attention.
 
@@ -82,13 +82,10 @@ MediQueue supports quality healthcare delivery by improving patient organization
 
 ## 🌍 Real-World Impact
 
-MediQueue is designed to support clinics and healthcare centers across Sierra Leone by:
-
-Reducing patient waiting times
-Improving queue organization
-Prioritizing emergency cases
-Enhancing healthcare service delivery
-Supporting digital transformation in healthcare
+* Reducing patient waiting times
+* Improving queue organization
+* Prioritizing emergency cases
+* Enhancing healthcare service delivery
 
 
 
@@ -101,17 +98,13 @@ Supporting digital transformation in healthcare
 
 ## 🧰 Technology Stack
 
-Language: Python 3
-GUI Framework: Tkinter
-GUI Theme Library: ttkbootstrap
-Data Storage: Python Lists and Dictionaries
-Data Export: CSV Files
+* Language: Python 3
+* GUI Framework: Tkinter
+* GUI Theme Library: ttkbootstrap
+* Data Storage: Python Lists and Dictionaries
+* Data Export: CSV Files
+* License: MIT
 
-
-
-## 📄 License
-
-This project is licensed under the MIT License. See the LICENSE.md file for details.
 
 
 
