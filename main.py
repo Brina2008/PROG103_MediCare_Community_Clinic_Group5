@@ -116,12 +116,12 @@ def update_patient(pid, name, age, gender, contact, complaint, arrived, category
             break
     sort_patients()
 
-# Added - delete patient by ID
+# Added - remove a patient from the waiting queue by their ID
 def delete_patient(pid):
     global patients
     patients = [p for p in patients if p["id"] != pid]
 
-# Added - exact ID lookup
+# Added - exact ID lookupsearch both waiting and served lists by exact patient ID
 def find_by_id(pid):
     for p in patients + served:
         if p["id"] == pid.upper().strip():
@@ -135,7 +135,7 @@ def served_summary():
         counts[p["category"]] += 1
     return counts
 
-# Added - CSV export & auto backup
+# Added - shared CSV writer used by both export and auto backup
 FIELDNAMES = ["id","name","age","gender","contact","complaint",
               "arrived","category","queue_no","status"]
 
@@ -238,7 +238,7 @@ def show_login_screen(root, on_success):
     ttk.Button(btn, text="Register", command=do_register,
                bootstyle="success-outline", width=16).pack(side=LEFT, padx=10)
 
-# Added - Edit / Delete Dashboard
+# Added - search patient by ID first, then allow edit or delete with confirmation
 def open_edit_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Edit / Delete Patient")
@@ -310,6 +310,7 @@ def open_edit_dashboard(parent):
     def do_delete():
         if not found[0]: err.config(text="Search for a patient first"); return
         pid = found[0]["id"]
+        # Ask confirmation before permanently removing the patient
         if messagebox.askyesno("Confirm Delete",
             f"Delete {pid} — {found[0]['name']}?\nThis cannot be undone"):
             delete_patient(pid)
@@ -366,20 +367,24 @@ def open_queue_dashboard(parent):
     def refresh():
         tree.delete(*tree.get_children())
         if not patients:
-            tree.insert("", END, values=("-", "-", "No patients waiting", "-", "-", "-", " -", "-"))
+            # 8 dashes to match the 8 columns
+            tree.insert("", END, values=("-", "-", "No patients waiting", 
+                                         "-", "-", "-", " -", "-"))
+
         else:
             for i, p in enumerate(patients, 1):
                 tag = ("next" if i == 1 else
-                   "emerg" if p["category"] == "Emergency" else
-                   "preg"  if p["category"] == "Pregnant"  else "")
+                        "emerg" if p["category"] == "Emergency" else
+                        "preg"  if p["category"] == "Pregnant"  else "")
             wait = f"{i * AVG_MIN} min" 
             tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
-                        p["category"], p["arrived"], p["complaint"], wait), tags=(tag,))
+                        p["category"], p["arrived"], p["complaint"], wait), 
+                        tags=(tag,))
             
-            if win.winfo_exists():
-                win.after(10000, refresh)
+        if win.winfo_exists():
+            win.after(10000, refresh)
 
-    def undo_call():  # Added - restore accidental call
+    def undo_call():  # Added - restore patient if nurse accidentally clicks Call Next
         if undo_last_call():
             messagebox.showinfo("Restored", "Last called patient returned to queue")
             refresh()
@@ -433,11 +438,11 @@ def open_register_dashboard(parent, on_done):
     tv = tk.StringVar(value=datetime.now().strftime("%H:%M"))
     kv = tk.StringVar(value="Normal")
 
-    for i, (lbl, var) in enumerate([("Full Name", nv), 
-                                     ("Age", av),
-                                     ("Contact Number", ctv),
-                                     ("Complaint", cv), 
-                                     ("Arrived (HH:MM)", tv)]):
+    for i, (lbl, var) in enumerate([("Full Name",        nv), 
+                                     ("Age",              av),
+                                     ("Contact Number",   ctv),
+                                     ("Complaint",        cv), 
+                                     ("Arrived (HH:MM)",  tv)]):
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=5)
         ttk.Entry(frm, textvariable=var, width=28).grid(
             row=i, column=1, pady=6, padx=(8, 0))
