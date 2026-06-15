@@ -376,8 +376,8 @@ def open_queue_dashboard(parent):
                 tag = ("next" if i == 1 else
                         "emerg" if p["category"] == "Emergency" else
                         "preg"  if p["category"] == "Pregnant"  else "")
-            wait = f"{i * AVG_MIN} min" 
-            tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
+                wait = f"{i * AVG_MIN} min" 
+                tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
                         p["category"], p["arrived"], p["complaint"], wait), 
                         tags=(tag,))
             
