@@ -18,6 +18,14 @@ PRIORITY = {"Emergency": 1, "Pregnant": 2, "Normal": 3}
 AVG_MIN = 5
 last_called = [None]
 
+# Added - new features data stores
+appointments  = []
+activity_log  = []  
+announcements = []
+absent        = [] 
+WAIT_ALERT_MIN = 45 
+current_user   = [""] 
+
 #  Added - staff accounts (receptionist + nurse) 
 STAFF_FILE = "staff_account.csv"
 staff_accounts = {}
