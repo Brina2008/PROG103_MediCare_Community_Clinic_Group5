@@ -132,6 +132,58 @@ def check_duplicate(name, contact):
             return True
     return False
 
+# Added - Staff Activity Log
+def log_activity(message):
+    timestamp = datetime.now().strftime("%H:%M")
+    activity_log.append(f"{timestamp} {message}")
+
+# Added - Appointment Scheduling
+def book_appointment(name, contact, date, time, note, staff_user):
+    appointments.append({
+        "name": name.title(), "contact": contact,
+        "date": date, "time": time, "note": note,
+        "booked_by": staff_user
+    })
+    log_activity(f"{staff_user} booked appointment for {name.title()} on {date} {time}")
+
+def get_appointments_for_today():
+    today = datetime.now().strftime("%d/%m/%Y")
+    return [a for a in appointments if a["date"] == today]
+
+# Added - Waiting Time Alerts
+def get_overdue_patients():
+    overdue = []
+    for i, p in enumerate(patients, 1):
+        if i * AVG_MIN >= WAIT_ALERT_MIN:
+            overdue.append(p)
+    return overdue
+
+# Added - Doctor/Nurse Assignment
+def assign_nurse(pid, nurse_name):
+    for p in patients:
+        if p["id"] == pid:
+            p["assigned_nurse"] = nurse_name
+            log_activity(f"{pid} assigned to {nurse_name}")
+            return True
+    return False
+
+# Added - Search by Date (uses reg_date stamped at registration time)
+def search_by_date(date_str):
+    return [p for p in patients + served if p.get("reg_date") == date_str]
+
+def recall_patient(pid):
+    # Move a patient from absent back into the waiting queue
+    global absent
+    target = next((p for p in absent if p["id"] == pid), None)
+    if not target:
+        return False
+    target["status"] = "Waiting"
+    patients.append(target)
+    sort_patients()
+    absent = [p for p in absent if p["id"] != pid]
+    log_activity(f"{current_user[0]} recalled {pid} ({target['name']})")
+    return True
+
 #  Validation
 
 def ok_name(t):     return bool(t.strip()) and t.replace(" ", "").isalpha()
