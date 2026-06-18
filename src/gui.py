@@ -1,400 +1,15 @@
-""" Patient Queue Management System - MediCare Community Clinic, Sierra Leone
-GUI: ttkbootstrap (flatly theme)
-"""
+"""GUI: ttkbootstrap (flatly theme)"""
 
 import tkinter as tk
 from tkinter import messagebox
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from datetime import datetime
-import csv, os, hashlib
 
-# In-Memory Data
-patients = []  
-served   = [] 
-counter  = [1]
+# Import all the functions and data structure from logic
+from logic import *
+from utils import *
 
-PRIORITY = {"Emergency": 1, "Pregnant": 2, "Normal": 3}
-AVG_MIN = 5
-                                                                   
-# Added - new features data stores
-last_called = [None]
-appointments  = []  
-activity_log  = []   
-announcements = []  
-absent        = []   
-WAIT_ALERT_MIN = 45  
-current_user   = [""]  
-
-
-STAFF_FILE     = "staff_accounts.csv"
-staff_accounts = {}
-login_attempts = {}  
-
-# Core Function
-
-def make_id():
-    pid = f"P-{counter[0]:03d}"
-    counter[0] += 1
-    return pid
-
-def sort_patients():
-    patients.sort(key=lambda p: (PRIORITY[p["category"]], p["arrived"]))
-
-def reorder_queue():    
-    for i, p in enumerate(patients, 1):
-        p["queue_no"] = i
-
-def register_patient_full(name, age, gender, contact, complaint, arrived, category):
-    pid = make_id()
-    patients.append({
-        "id": pid, "name": name.title(), "age": age,
-        "gender": gender, "contact": contact,
-        "complaint": complaint.capitalize(),
-        "arrived": arrived, "category": category,
-        "queue_no": len(patients) + len(served) + 1,
-        "status": "Waiting",
-        "visits": count_visits(name.title()),
-        "reg_date": datetime.now().strftime("%d/%m/%Y") 
-    })
-    sort_patients()
-    return pid
-
-def call_next_patient():
-    if not patients:
-        return None
-    p = patients.pop(0)
-    p["status"] = "Served"
-    served.append(p)
-    last_called[0] = p
-    return p
-
-def undo_last_call():
-    if last_called[0] is None:
-        return False
-    p = last_called[0]
-    if p in served:
-        served.remove(p)
-        p["status"] = "Waiting" 
-        patients.append(p)
-        sort_patients()         
-        last_called[0] = None
-        return True
-    return False
-
-def update_patient(pid, name, age, gender, contact, complaint, arrived, category):
-    for p in patients:
-        if p["id"] == pid:
-            p["name"] = name.title(); p["age"] = age
-            p["gender"] = gender;     p["contact"] = contact
-            p["complaint"] = complaint.capitalize()
-            p["arrived"] = arrived;   p["category"] = category
-            break
-    sort_patients()
-
-def delete_patient(pid):
-    global patients
-    patients = [p for p in patients if p["id"] != pid]
-    reorder_queue() 
-
-def find_by_id(pid):
-    for p in patients + served:
-        if p["id"] == pid.upper().strip():
-            return p
-    return None
-
-def search_patients(term):
-    term = term.lower()
-    return [p for p in patients + served
-            if term in p["id"].lower() or term in p["name"].lower()]
-
-def queue_summary():
-    counts = {"Emergency": 0, "Pregnant": 0, "Normal": 0}
-    for p in patients:
-        counts[p["category"]] += 1
-    return counts
-
-def served_summary():
-    counts = {"Emergency": 0, "Pregnant": 0, "Normal": 0}
-    for p in served:
-        counts[p["category"]] += 1
-    return counts
-
-def count_visits(name):    
-    return sum(1 for p in served if p["name"] == name)
-
-def check_duplicate(name, contact):    
-    name = name.title()
-    for p in patients:
-        if p["name"] == name and p.get("contact", "") == contact:
-            return True
-    return False
-
-ACTIVITY_FILE      = "activity_log.csv"
-APPOINTMENTS_FILE  = "appointments.csv"
-ANNOUNCEMENTS_FILE = "announcements.txt"
-
-# Added - Staff Activity Log 
-def log_activity(message):
-    timestamp = datetime.now().strftime("%H:%M")
-    activity_log.append(f"{timestamp} {message}")
-    save_activity_log()
-
-def save_activity_log():
-    with open(ACTIVITY_FILE, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["entry"])
-        for entry in activity_log:
-            writer.writerow([entry])
-
-def load_activity_log():
-    if not os.path.exists(ACTIVITY_FILE):
-        return
-    activity_log.clear() 
-    with open(ACTIVITY_FILE) as f:
-        reader = csv.reader(f)
-        next(reader, None)
-        for row in reader:
-            if row:
-                activity_log.append(row[0])
-
-# Added - Appointment Scheduling
-APPT_FIELDS = ["name", "contact", "date", "time", "note", "booked_by"]
-
-def book_appointment(name, contact, date, time, note, staff_user):
-    appointments.append({
-        "name": name.title(), "contact": contact,
-        "date": date, "time": time, "note": note,
-        "booked_by": staff_user
-    })
-    save_appointments()
-    log_activity(f"{staff_user} booked appointment for {name.title()} on {date} {time}")
-
-def save_appointments():
-    with open(APPOINTMENTS_FILE, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=APPT_FIELDS)
-        writer.writeheader()
-        for a in appointments:
-            writer.writerow(a)
-
-def load_appointments():
-    if not os.path.exists(APPOINTMENTS_FILE):
-        return
-    appointments.clear()
-    with open(APPOINTMENTS_FILE) as f:
-        for row in csv.DictReader(f):
-            appointments.append(row)
-
-def get_appointments_for_today():
-    today = datetime.now().strftime("%d/%m/%Y")
-    return [a for a in appointments if a["date"] == today]
-
-def save_announcements():
-    with open(ANNOUNCEMENTS_FILE, "w") as f:
-        for a in announcements:
-            f.write(a + "\n")
-
-def load_announcements():
-    if not os.path.exists(ANNOUNCEMENTS_FILE):
-        return
-    announcements.clear() 
-    with open(ANNOUNCEMENTS_FILE) as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if line:
-                announcements.append(line)
-
-# Added - Waiting Time Alerts
-def get_overdue_patients():
-    overdue = []
-    for i, p in enumerate(patients, 1):
-        if i * AVG_MIN >= WAIT_ALERT_MIN:
-            overdue.append(p)
-    return overdue
-
-# Added - Nurse Assignment
-def assign_nurse(pid, nurse_name):
-    for p in patients:
-        if p["id"] == pid:
-            p["assigned_nurse"] = nurse_name
-            log_activity(f"{pid} assigned to {nurse_name}")
-            return True
-    return False
-
-# Added - Search by Date
-def search_by_date(date_str):
-    return [p for p in patients + served if p.get("reg_date") == date_str]
-
-# Added - Export Served Patients Only
-def export_served_csv():
-    filename = "served_patients.csv"
-    with open(filename, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-        writer.writeheader()
-        for p in served:
-            row = {k: p.get(k, "") for k in FIELDNAMES}
-            row["status"] = "Served"
-            writer.writerow(row)
-    return filename
-
-# Added - Patient Recall / Absent Patient Management
-def mark_absent(pid):
-    global patients
-    target = next((p for p in patients if p["id"] == pid), None)
-    if not target:
-        return False
-    target["status"] = "Absent"
-    absent.append(target)
-    patients = [p for p in patients if p["id"] != pid]
-    reorder_queue()
-    log_activity(f"{current_user[0]} marked {pid} ({target['name']}) as absent")
-    return True
-
-def recall_patient(pid):
-    global absent
-    target = next((p for p in absent if p["id"] == pid), None)
-    if not target:
-        return False
-    target["status"] = "Waiting"
-    patients.append(target)
-    sort_patients()
-    absent = [p for p in absent if p["id"] != pid]
-    log_activity(f"{current_user[0]} recalled {pid} ({target['name']})")
-    return True
-
-# Added - Registration Cancellation Reasons
-cancellation_reasons = []
-
-def record_cancellation(pid, name, reason):
-    cancellation_reasons.append({"id": pid, "name": name, "reason": reason})
-    log_activity(f"{current_user[0]} cancelled {pid} ({name}) - reason: {reason}")
-
-# Added - Daily Report Export (plain text summary)
-def export_daily_report():
-    filename = f"daily_report_{datetime.now().strftime('%Y%m%d')}.txt"
-    counts = queue_summary()
-    with open(filename, "w") as f:
-        f.write("Daily Report\n")
-        f.write(f"Date: {datetime.now().strftime('%d/%m/%Y')}\n\n")
-        f.write(f"Registered: {len(patients) + len(served)}\n")
-        f.write(f"Served    : {len(served)}\n")
-        f.write(f"Emergency : {counts['Emergency']}\n")
-        f.write(f"Pregnant  : {counts['Pregnant']}\n")
-        f.write(f"Normal    : {counts['Normal']}\n")
-        f.write(f"Absent    : {len(absent)}\n")
-    return filename
-
-# Validation
-
-def ok_name(t):      return bool(t.strip()) and t.replace(" ", "").isalpha()
-def ok_age(t):       return t.isdigit() and 0 <= int(t) <= 120
-def ok_note(t):      return bool(t.strip()) and not t.strip().isdigit()
-def ok_time(t):
-    return (len(t) == 5 and t[2] == ":" and t[:2].isdigit() and t[3:].isdigit()
-            and 0 <= int(t[:2]) <= 23 and 0 <= int(t[3:]) <= 59)
-def ok_complaint(t): return bool(t.strip()) and not t.strip().isdigit() and len(t.strip()) >= 3
-def ok_contact(t):   return t.isdigit() and 7 <= len(t) <= 15
-
-
-def make_tree(parent, cols, widths, heading_bg="#1a4f8a", rowheight=26,
-              height=14, wide_cols=("Name", "Complaint")):
-    frame = ttk.Frame(parent); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
-
-    style_name = f"T{id(cols)}.Treeview"
-    s = ttk.Style()
-    s.configure(f"{style_name}.Heading", background=heading_bg, foreground="white",
-                font=("Tahoma", 11, "bold"), relief="flat")
-    s.map(f"{style_name}.Heading", background=[("active", heading_bg)])
-    s.configure(style_name, rowheight=rowheight)
-
-    tree = ttk.Treeview(frame, columns=cols, show="headings", height=height, style=style_name)
-    for c, w in zip(cols, widths):
-        tree.heading(c, text=c)
-        tree.column(c, width=w, anchor=CENTER, minwidth=50, stretch=True)
-    for c in wide_cols:
-        if c in cols:
-            tree.column(c, anchor=W, stretch=True)
-
-    sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
-    tree.configure(yscrollcommand=sb.set)
-    tree.pack(side=LEFT, fill=BOTH, expand=True); sb.pack(side=LEFT, fill=Y)
-    return tree
-
-def get_selected_id(tree, col_index=0):
-    sel = tree.selection()
-    if not sel:
-        return None
-    pid = tree.item(sel[0], "values")[col_index]
-    return None if pid in ("-",) else pid
-
-# Security
-
-def hash_password(password):
-    return hashlib.md5(password.encode()).hexdigest()
-
-
-def save_staff_accounts():    
-    with open(STAFF_FILE, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["username", "password_hash", "role"])
-        writer.writeheader()
-        for u, v in staff_accounts.items():
-            writer.writerow({
-                "username":      u,
-                "password_hash": v["password_hash"],
-                "role":          v["role"]
-            })
-
-def load_staff_accounts():    
-    if not os.path.exists(STAFF_FILE):
-        return
-    with open(STAFF_FILE) as f:
-        for row in csv.DictReader(f):
-            staff_accounts[row["username"]] = {
-                "password_hash": row["password_hash"],
-                "role":          row["role"]
-            }
-
-# CSV & Export Backup
-
-FIELDNAMES = ["id", "name", "age", "gender", "contact", "complaint",
-              "arrived", "category", "queue_no", "status"]
-
-def save_to_csv(filename):
-    with open(filename, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-        writer.writeheader()
-        for p in patients:
-            row = {k: p.get(k, "") for k in FIELDNAMES}
-            row["status"] = "Waiting"
-            writer.writerow(row)
-        for p in served:
-            row = {k: p.get(k, "") for k in FIELDNAMES}
-            row["status"] = "Served"
-            writer.writerow(row)
-
-def export_csv():
-    save_to_csv("export.csv")
-    messagebox.showinfo("Exported", "Records saved to export.csv")
-
-def auto_backup():
-    date_str = datetime.now().strftime("%Y_%m_%d")
-    save_to_csv(f"backup_{date_str}.csv")
-
-def import_backup(filepath):
-    global patients, served
-    patients.clear(); served.clear()
-    with open(filepath) as f:
-        for row in csv.DictReader(f):
-            row["age"]      = int(row["age"])      if row["age"].isdigit()      else 0
-            row["queue_no"] = int(row["queue_no"]) if row["queue_no"].isdigit() else 0
-            if row["status"] == "Waiting":
-                patients.append(row)
-            else:
-                served.append(row)
-    sort_patients()
-
-# Login Screen 
-
+       # Login Screen 
 def show_login_screen(root, on_success):
     load_staff_accounts()  
     load_activity_log()     
@@ -411,12 +26,21 @@ def show_login_screen(root, on_success):
     win.pack(fill=BOTH, expand=True)
 
     ttk.Label(win, text="Welcome to MediCare",
-              font=("Tahoma", 17, "bold"), bootstyle="primary").pack(pady=(36, 2))
+                            font=("Tahoma", 17, "bold"), 
+                            bootstyle="primary").pack(pady=(36, 2))
+    
+    # Patient Queue
     ttk.Label(win, text="Patient Queue System",
-              font=("Tahoma", 14), bootstyle="primary").pack()
+                           font=("Tahoma", 14), 
+                           bootstyle="primary").pack()
+    
+    # Receptionist & Nurse 
     ttk.Label(win, text="Receptionist & Nurse Staff Login",
-              font=("Tahoma", 11), bootstyle="secondary").pack(pady=(6, 18))
-    ttk.Separator(win).pack(fill=X, padx=40, pady=(0, 20))
+                           font=("Tahoma", 11), 
+                           bootstyle="secondary").pack(pady=(6, 18))
+    
+    ttk.Separator(win).pack(fill=X, 
+                            padx=40, pady=(0, 20))
 
     frm = ttk.Frame(win, padding=(40, 0)); frm.pack()
 
@@ -425,18 +49,31 @@ def show_login_screen(root, on_success):
 
     for i, (lbl, var, show) in enumerate([("Username", uv, ""), ("Password", pv, "*")]):
         ttk.Label(frm, text=f"{lbl}:", font=("Tahoma", 12)).grid(
-            row=i, column=0, sticky=W, pady=12)
+                                                            row=i, 
+                                                            column=0, 
+                                                            sticky=W, 
+                                                            pady=12)
+        
         ttk.Entry(frm, textvariable=var, show=show, width=28,
-                  font=("Tahoma", 12)).grid(row=i, column=1, pady=12, padx=(12, 0))
+                  font=("Tahoma", 12)).grid(row=i, 
+                                            column=1, 
+                                            pady=12, 
+                                            padx=(12, 0))
 
-    ttk.Label(frm, text="Role:", font=("Tahoma", 12)).grid(row=2, column=0, sticky=W, pady=12)
+    # Role Selection Dropdown
+    ttk.Label(frm, text="Role:", font=("Tahoma", 12)).grid(row=2, 
+                                                           column=0, sticky=W, pady=12)
     ttk.Combobox(frm, textvariable=rv, width=26, state="readonly",
                  values=["Receptionist", "Nurse"],
-                 font=("Tahoma", 12)).grid(row=2, column=1, pady=12, padx=(12, 0))
+                 font=("Tahoma", 12)).grid(row=2, 
+                                           column=1, 
+                                           pady=12, 
+                                           padx=(12, 0))
 
     err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10), wraplength=380)
     err.grid(row=3, column=0, columnspan=2, pady=8)
 
+    # Validate User Login Credentials
     def do_login():
         u, p, r = uv.get().strip(), pv.get(), rv.get()
         if not u or not p:
@@ -464,6 +101,7 @@ def show_login_screen(root, on_success):
         win.destroy()
         on_success(root, u, r)
 
+    # User Registration Function
     def do_register():
         u, p, r = uv.get().strip(), pv.get(), rv.get()
         if not u or not p:
@@ -476,6 +114,7 @@ def show_login_screen(root, on_success):
         save_staff_accounts()
         err.config(text=f"{r} '{u}' registered successfully. You can now log in.")
 
+    # Login and Registration Buttons
     btn = ttk.Frame(frm)
     btn.grid(row=4, column=0, columnspan=2, pady=20)
     ttk.Button(btn, text="Login",    command=do_login,
@@ -483,8 +122,58 @@ def show_login_screen(root, on_success):
     ttk.Button(btn, text="Register", command=do_register,
                bootstyle="success-outline", width=16).pack(side=LEFT, padx=10)
 
-# Edit / Delete Dashboard
+# Create and Configure Treeview Widget
+def make_tree(parent, cols, widths, heading_bg="#1a4f8a", 
+              rowheight=26,
+              height=14, wide_cols=("Name", "Complaint")):
+    frame = ttk.Frame(parent); frame.pack(fill=BOTH, 
+                                          expand=True, 
+                                          padx=10, 
+                                          pady=8)
 
+    # Treeview Styling
+    style_name = f"T{id(cols)}.Treeview"
+    s = ttk.Style()
+    s.configure(f"{style_name}.Heading", 
+                               background=heading_bg, 
+                               foreground="white",
+                               font=("Tahoma", 11, "bold"), 
+                               relief="flat")
+    
+    s.map(f"{style_name}.Heading", background=[("active", heading_bg)])
+    s.configure(style_name, rowheight=rowheight)
+
+    tree = ttk.Treeview(frame, 
+                        columns=cols, 
+                        show="headings", 
+                        height=height, 
+                        style=style_name)
+    
+    for c, w in zip(cols, widths):
+        tree.heading(c, text=c)
+        tree.column(c, width=w, 
+                    anchor=CENTER, 
+                    minwidth=50, 
+                    stretch=True)
+        
+    for c in wide_cols:
+        if c in cols:
+            tree.column(c, anchor=W, stretch=True)
+
+    sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
+    tree.configure(yscrollcommand=sb.set)
+    tree.pack(side=LEFT, fill=BOTH, expand=True); sb.pack(side=LEFT, fill=Y)
+    return tree
+
+# Get Selected Patient ID from Treeview
+def get_selected_id(tree, col_index=0):
+    sel = tree.selection()
+    if not sel:
+        return None
+    pid = tree.item(sel[0], "values")[col_index]
+    return None if pid in ("-",) else pid
+
+# Edit / Delete Dashboard
 def open_edit_dashboard(parent, update_stats_cb=None): 
     win = ttk.Toplevel(parent)
     win.title("Edit / Delete Patient")
@@ -507,20 +196,34 @@ def open_edit_dashboard(parent, update_stats_cb=None):
     cv = tk.StringVar(); tv = tk.StringVar()
     kv = tk.StringVar(value="Normal")
 
-    for i, (lbl, var) in enumerate([("Full Name", nv), ("Age", av),
-                                     ("Contact", ctv), ("Complaint", cv),
+    for i, (lbl, var) in enumerate([("Full Name", nv), 
+                                     ("Age", av),
+                                     ("Contact", ctv), 
+                                     ("Complaint", cv),
                                      ("Arrived (HH:MM)", tv)]):
+        
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=5)
-        ttk.Entry(frm, textvariable=var, width=28).grid(row=i, column=1, pady=5, padx=(8, 0))
+        ttk.Entry(frm, textvariable=var, width=28).grid(row=i, 
+                                                        column=1, 
+                                                        pady=5, 
+                                                        padx=(8, 0))
 
     ttk.Label(frm, text="Gender:").grid(row=5, column=0, sticky=W, pady=5)
-    ttk.Combobox(frm, textvariable=gv, width=26, state="readonly",
-                 values=["Male", "Female"]).grid(row=5, column=1, pady=5, padx=(8, 0))
+    ttk.Combobox(frm, textvariable=gv, width=26, 
+                 state="readonly",
+                 values=["Male", "Female"]).grid(row=5, 
+                                                 column=1, 
+                                                 pady=5, 
+                                                 padx=(8, 0))
 
     ttk.Label(frm, text="Category:").grid(row=6, column=0, sticky=W, pady=5)
-    ttk.Combobox(frm, textvariable=kv, width=26, state="readonly",
-                 values=["Emergency", "Pregnant", "Normal"]).grid(
-                 row=6, column=1, pady=5, padx=(8, 0))
+    ttk.Combobox(frm, textvariable=kv, 
+                 width=26, 
+                 state="readonly",
+                 values=["Emergency", "Pregnant", "Normal"]).grid(row=6, 
+                                                                  column=1, 
+                                                                  pady=5, 
+                                                                  padx=(8, 0))
 
     err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 9))
     err.grid(row=7, column=0, columnspan=2, pady=2)
@@ -538,9 +241,13 @@ def open_edit_dashboard(parent, update_stats_cb=None):
 
     def do_update():
         if not found[0]: err.config(text="Search for a patient first"); return
-        n, a, ct, c, t, g, k = (nv.get().strip(), av.get().strip(),
-                                  ctv.get().strip(), cv.get().strip(),
-                                  tv.get().strip(), gv.get(), kv.get())
+        n, a, ct, c, t, g, k = (nv.get().strip(), 
+                                av.get().strip(),
+                                ctv.get().strip(), 
+                                cv.get().strip(),
+                                tv.get().strip(), 
+                                gv.get(), kv.get())
+        
         for ok, msg in [(ok_name(n),     "Name: letters only"),
                         (ok_age(a),      "Age: 0 to 120"),
                         (ok_contact(ct), "Contact: digits only, 7-15 numbers"),
@@ -570,9 +277,15 @@ def open_edit_dashboard(parent, update_stats_cb=None):
         ttk.Label(reason_win, text=f"Reason for deleting {pid}:",
                   font=("Tahoma", 11, "bold")).pack(pady=(14, 6))
         reason_var = tk.StringVar(value="Patient request")
-        ttk.Combobox(reason_win, textvariable=reason_var, width=30, state="readonly",
-                     values=["Patient request", "Duplicate entry", "Wrong information",
-                             "No longer needed", "Other"]).pack(pady=6)
+        ttk.Combobox(reason_win, 
+                    textvariable=reason_var, 
+                    width=30, 
+                    state="readonly",
+                    values=["Patient request", 
+                             "Duplicate entry", 
+                             "Wrong information",
+                             "No longer needed", 
+                             "Other"]).pack(pady=6)
 
         note_var = tk.StringVar()
         ttk.Label(reason_win, text="Additional note (optional):").pack(pady=(10, 2))
@@ -604,14 +317,14 @@ def open_edit_dashboard(parent, update_stats_cb=None):
                bootstyle="secondary-outline",width=10).pack(side=LEFT, padx=6)
 
 # Queue Dashboard
-
 def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     win = ttk.Toplevel(parent)
     win.title("Live Queue")
     win.geometry("1100x680")
 
-    ttk.Label(win, text="Waiting Queue", font=("Tahoma", 14, "bold"),
-              bootstyle="primary").pack(pady=(10, 2))
+    ttk.Label(win, text="Waiting Queue", 
+                               font=("Tahoma", 14, "bold"),
+                               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10)
 
     filter_bar = ttk.Frame(win, padding=(10, 6)); filter_bar.pack(fill=X)
@@ -624,7 +337,11 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     widths = [50,   70,   150,    50,    100,        80,        160,          90,        100]
 
     frame = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
-    tree = ttk.Treeview(frame, columns=cols, show="headings", height=12)
+    tree = ttk.Treeview(frame, 
+                        columns=cols, 
+                        show="headings", 
+                        height=12)
+    
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, minwidth=50, stretch=True)
@@ -636,7 +353,8 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
 
     s = ttk.Style()
     s.configure("Queue.Treeview.Heading", background="#1a4f8a", foreground="white",
-                font=("Tahoma", 11, "bold"), relief="flat")
+                                                                  font=("Tahoma", 11, "bold"), 
+                                                                  relief="flat")
     s.map("Queue.Treeview.Heading", background=[("active", "#1a4f8a")])
     tree.configure(style="Queue.Treeview")
     tree.tag_configure("next",  background="#c8f0d4", foreground="#1a4731")
@@ -644,7 +362,8 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     tree.tag_configure("preg",  background="#d6eaf8", foreground="#1a3a5c")
 
     ttk.Label(win, text="Green = Next   Red = Emergency   Blue = Pregnant",
-              font=("Tahoma", 10), bootstyle="secondary").pack(anchor=W, padx=12)
+                                                              font=("Tahoma", 10), 
+                                                              bootstyle="secondary").pack(anchor=W, padx=12)
    
     alert_lbl = ttk.Label(win, text="", font=("Tahoma", 9, "bold"), bootstyle="danger")
     alert_lbl.pack(anchor=W, padx=12, pady=(2, 0))
@@ -667,12 +386,14 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
                 tag = ("next"  if i == 1 else
                        "emerg" if p["category"] == "Emergency" else
                        "preg"  if p["category"] == "Pregnant"  else "")
+                
                 wait  = f"{i * AVG_MIN} min"
                 nurse = p.get("assigned_nurse", "-")
                 tree.insert("", END, values=(i, p["id"], p["name"], p["age"],
                             p["category"], p["arrived"], p["complaint"], wait, nurse),
                             tags=(tag,))
             overdue = get_overdue_patients()
+
             if overdue:
                 names = ", ".join(p["name"] for p in overdue)
                 alert_lbl.config(text=f"WARNING: {len(overdue)} patient(s) waiting over "
@@ -693,10 +414,12 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
         called = call_next_patient()
         log_activity(f"{current_user[0]} called {called['id']} ({called['name']})")
         nxt = (f"Next: {patients[0]['name']} ({patients[0]['category']})"
+               
                if patients else "Queue is now empty")
         messagebox.showinfo("Now Calling",
             f"{called['name'].upper()} - Ticket #{called['queue_no']}\n"
             f"Category : {called['category']}\nComplaint: {called['complaint']}\n\n{nxt}")
+        
         if update_stats_cb: update_stats_cb()
         refresh()
 
@@ -768,7 +491,6 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     refresh()
 
 # Register Dashboard
-
 def open_register_dashboard(parent, on_done):
     win = ttk.Toplevel(parent)
     win.title("Register Patient")
@@ -776,7 +498,7 @@ def open_register_dashboard(parent, on_done):
     win.grab_set()
 
     ttk.Label(win, text="Register New Patient",
-              font=("Tahoma", 13, "bold")).pack(pady=10)
+                                        font=("Tahoma", 13, "bold")).pack(pady=10)
     ttk.Separator(win).pack(fill=X, padx=10)
 
     frm = ttk.Frame(win, padding=16); frm.pack(fill=BOTH, expand=True)
@@ -793,20 +515,31 @@ def open_register_dashboard(parent, on_done):
                                      ("Contact Number",  ctv),
                                      ("Complaint",       cv),
                                      ("Arrived (HH:MM)", tv)]):
+        
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=5)
         ttk.Entry(frm, textvariable=var, width=28).grid(row=i, column=1, pady=6, padx=(8, 0))
 
     # Gender row 5
     ttk.Label(frm, text="Gender:").grid(row=5, column=0, sticky=W, pady=5)
-    gender_cb = ttk.Combobox(frm, textvariable=gv, width=26, state="readonly",
-                             values=["Male", "Female"])
-    gender_cb.grid(row=5, column=1, pady=5, padx=(8, 0))
+    gender_cb = ttk.Combobox(frm, textvariable=gv, 
+                                  width=26, state="readonly",
+                                  values=["Male", "Female"])
+    gender_cb.grid(row=5, 
+                   column=1, 
+                   pady=5, 
+                   padx=(8, 0))
 
     # Category row 6
     ttk.Label(frm, text="Category:").grid(row=6, column=0, sticky=W, pady=5)
-    cat_cb = ttk.Combobox(frm, textvariable=kv, width=26, state="readonly",
+    cat_cb = ttk.Combobox(frm, 
+                          textvariable=kv, 
+                          width=26, 
+                          state="readonly",
                           values=["Emergency", "Pregnant", "Normal"])
-    cat_cb.grid(row=6, column=1, pady=5, padx=(8, 0))
+    cat_cb.grid(row=6, 
+                column=1, 
+                pady=5, 
+                padx=(8, 0))
 
     # Error label row 7
     err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10))
@@ -821,9 +554,12 @@ def open_register_dashboard(parent, on_done):
     gv.trace_add("write", on_gender_change)
 
     def submit():
-        n, a, ct, c, t, k = (nv.get().strip(),  av.get().strip(),
-                              ctv.get().strip(), cv.get().strip(),
-                              tv.get().strip(),  kv.get())
+        n, a, ct, c, t, k = (nv.get().strip(),  
+                             av.get().strip(),
+                            ctv.get().strip(), 
+                            cv.get().strip(),
+                            tv.get().strip(),  kv.get())
+        
         for ok, msg in [(ok_name(n),     "Name: letters only"),
                         (ok_age(a),      "Age: 0-120"),
                         (ok_contact(ct), "Contact: digits only, 7-15 numbers"),
@@ -849,10 +585,12 @@ def open_register_dashboard(parent, on_done):
         on_done(); win.destroy()
 
     ttk.Button(frm, text="Register Patient", command=submit,
-               bootstyle="success", width=18).grid(row=8, column=0, columnspan=2, pady=10)
+               bootstyle="success", width=18).grid(row=8, 
+                                                   column=0, 
+                                                   columnspan=2, 
+                                                   pady=10)
 
 # Search Dashboard
-
 def open_search_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Search Patient")
@@ -884,17 +622,26 @@ def open_search_dashboard(parent):
     frame  = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
 
     s2 = ttk.Style()
-    s2.configure("Search.Treeview.Heading", background="#0d6eaa", foreground="white",
-                 font=("Tahoma", 11, "bold"), relief="flat")
+    s2.configure("Search.Treeview.Heading", 
+                 background="#0d6eaa", 
+                 foreground="white",
+                 font=("Tahoma", 11, "bold"), 
+                 relief="flat")
+    
     s2.map("Search.Treeview.Heading", background=[("active", "#0d6eaa")])
     s2.configure("Search.Treeview", rowheight=26)
-    tree = ttk.Treeview(frame, columns=cols, show="headings",
-                        height=14, style="Search.Treeview")
+    tree = ttk.Treeview(frame, 
+                        columns=cols, 
+                        show="headings",
+                        height=14, 
+                        style="Search.Treeview")
+    
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
     tree.column("Name",      anchor=W, stretch=True)
     tree.column("Complaint", anchor=W, stretch=True)
+
     sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
     tree.configure(yscrollcommand=sb.set)
     tree.pack(side=LEFT, fill=BOTH, expand=True); sb.pack(side=LEFT, fill=Y)
@@ -920,19 +667,26 @@ def open_search_dashboard(parent):
             res.append((p, status))
 
         for p, status in res:
-            tree.insert("", END, values=(p["id"], p["name"], p["age"],
-                        p["category"], p["arrived"], p["complaint"], status))
+            tree.insert("", 
+                        END, 
+                        values=(p["id"], 
+                                p["name"], 
+                                p["age"],
+                        p["category"], 
+                        p["arrived"], 
+                        p["complaint"], 
+                        status))
         info.config(text=f"{len(res)} result(s) found." if res else "No matches found.")
 
     sv.trace_add("write",  do_search)
     fcat.trace_add("write",  do_search)
     fstat.trace_add("write", do_search)
 
-    ttk.Button(win, text="Close", command=win.destroy,
-               bootstyle="secondary-outline", width=10).pack(pady=6)
+    ttk.Button(win, text="Close", 
+                    command=win.destroy,
+                    bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Served Dashboard
-
 def open_served_dashboard(parent, role="Nurse"):
     win = ttk.Toplevel(parent)
     win.title("Served Patients")
@@ -947,13 +701,20 @@ def open_served_dashboard(parent, role="Nurse"):
     frame  = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10)
 
     s3 = ttk.Style()
-    s3.configure("Served.Treeview.Heading", background="#198754", foreground="white",
-                 font=("Tahoma", 10, "bold"), relief="flat")
+    s3.configure("Served.Treeview.Heading", 
+                 background="#198754", 
+                 foreground="white",
+                 font=("Tahoma", 10, "bold"), 
+                 relief="flat")
     s3.map("Served.Treeview.Heading", background=[("active", "#198754")])
     s3.configure("Served.Treeview", rowheight=28)
 
-    tree = ttk.Treeview(frame, columns=cols, show="headings",
-                        height=14, style="Served.Treeview")
+    tree = ttk.Treeview(frame, 
+                        columns=cols, 
+                        show="headings",
+                        height=14, 
+                        style="Served.Treeview")
+    
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
@@ -974,8 +735,12 @@ def open_served_dashboard(parent, role="Nurse"):
             return
         for i, p in enumerate(served):
             tag = "odd" if i % 2 == 0 else "even"
-            tree.insert("", END, values=(p["id"], p["name"], p["age"],
-                        p["category"], p["arrived"], p["complaint"]), tags=(tag,))
+            tree.insert("", END, values=(p["id"], 
+                                         p["name"], 
+                                         p["age"],
+                        p["category"], 
+                        p["arrived"], 
+                        p["complaint"]), tags=(tag,))
 
     def clear_served():
         if not served:
@@ -1023,14 +788,14 @@ def open_served_dashboard(parent, role="Nurse"):
                bootstyle="secondary-outline",    width=9).pack(side=LEFT, padx=4)
 
 # Summary Dashboard
-
 def open_summary_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Summary")
     win.geometry("600x620")
 
-    ttk.Label(win, text="Today's Summary", font=("Tahoma", 14, "bold"),
-              bootstyle="primary").pack(pady=(10, 2))
+    ttk.Label(win, text="Today's Summary",
+                   font=("Tahoma", 14, "bold"),
+                   bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 10))
 
     counts  = queue_summary()
@@ -1045,13 +810,17 @@ def open_summary_dashboard(parent):
     frame = ttk.Frame(win, padding=(12, 0)); frame.pack(fill=BOTH, expand=True, padx=12)
 
     s = ttk.Style()
-    s.configure("Summary.Treeview.Heading", background="#2c3e6b", foreground="white",
-                font=("Tahoma", 11, "bold"), relief="flat")
+    s.configure("Summary.Treeview.Heading", 
+                background="#2c3e6b", 
+                foreground="white",
+                font=("Tahoma", 11, "bold"), 
+                relief="flat")
     s.map("Summary.Treeview.Heading", background=[("active", "#2c3e6b")])
     s.configure("Summary.Treeview", rowheight=28)
 
-    tree = ttk.Treeview(frame, columns=("Description", "Count"), show="headings",
-                        height=16, style="Summary.Treeview")
+    tree = ttk.Treeview(frame, columns=("Description", "Count"), 
+                               show="headings",
+                               height=16, style="Summary.Treeview")
     tree.heading("Description", text="Description")
     tree.heading("Count",       text="Count")
     tree.column("Description",  width=340, anchor=W,      stretch=True, minwidth=200)
@@ -1103,7 +872,6 @@ def open_summary_dashboard(parent):
                bootstyle="secondary-outline", width=9).pack(side=LEFT, padx=5)
 
 #  Appointment Dashboard
-
 def open_appointment_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Appointment Scheduling")
@@ -1120,17 +888,27 @@ def open_appointment_dashboard(parent):
     tv = tk.StringVar(value="09:00")
     notev = tk.StringVar()
 
-    for i, (lbl, var) in enumerate([("Patient Name", nv), ("Contact", ctv),
-                                     ("Date (DD/MM/YYYY)", dv), ("Time (HH:MM)", tv),
-                                     ("Note", notev)]):
+    for i, (lbl, var) in enumerate([("Patient Name", nv), 
+                                    ("Contact", ctv),
+                                    ("Date (DD/MM/YYYY)", dv), 
+                                    ("Time (HH:MM)", tv),
+                                    ("Note", notev)]):
+        
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=4)
-        ttk.Entry(frm, textvariable=var, width=30).grid(row=i, column=1, pady=4, padx=(8, 0))
+        ttk.Entry(frm, textvariable=var, width=30).grid(row=i, 
+                                                        column=1, 
+                                                        pady=4, 
+                                                        padx=(8, 0))
 
     err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10))
-    err.grid(row=5, column=0, columnspan=2, pady=4)
+    err.grid(row=5, 
+             column=0, 
+             columnspan=2, 
+             pady=4)
 
     cols = ("Name", "Contact", "Date", "Time", "Note", "Booked By")
     tree = ttk.Treeview(win, columns=cols, show="headings", height=10)
+
     for c in cols:
         tree.heading(c, text=c)
         tree.column(c, width=110, anchor=W, stretch=True)
@@ -1139,11 +917,14 @@ def open_appointment_dashboard(parent):
     def refresh_list():
         tree.delete(*tree.get_children())
         for a in appointments:
-            tree.insert("", END, values=(a["name"], a["contact"], a["date"],
+            tree.insert("", END, values=(a["name"], 
+                                         a["contact"], 
+                                         a["date"],
                         a["time"], a["note"], a["booked_by"]))
 
     def submit_appt():
         n, ct, d, t, note = nv.get().strip(), ctv.get().strip(), dv.get().strip(), tv.get().strip(), notev.get().strip()
+
         if not ok_name(n):
             err.config(text="Name: letters only"); return
         if not ok_contact(ct):
@@ -1154,15 +935,19 @@ def open_appointment_dashboard(parent):
         messagebox.showinfo("Booked", f"Appointment booked for {n.title()} on {d} {t}")
         refresh_list()
 
-    ttk.Button(frm, text="Book Appointment", command=submit_appt,
-               bootstyle="success", width=20).grid(row=6, column=0, columnspan=2, pady=8)
+    ttk.Button(frm, text="Book Appointment", 
+                    command=submit_appt,
+               bootstyle="success", 
+               width=20).grid(row=6, 
+                              column=0, 
+                              columnspan=2, 
+                              pady=8)
 
     refresh_list()
     ttk.Button(win, text="Close", command=win.destroy,
                bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Activity Dashboard 
-
 def open_activity_log_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Staff Activity Log")
@@ -1185,7 +970,6 @@ def open_activity_log_dashboard(parent):
                bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Visit History Dashboard
-
 def open_visit_history_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Visit History")
@@ -1193,7 +977,9 @@ def open_visit_history_dashboard(parent):
 
     ttk.Label(win, text="Patient Visit History", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
-    ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
+    ttk.Separator(win).pack(fill=X, 
+                            padx=10, 
+                            pady=(0, 8))
 
     visit_counts = {}
     for p in served:
@@ -1217,7 +1003,6 @@ def open_visit_history_dashboard(parent):
                bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Announcement Dashboard
-
 def open_announcements_dashboard(parent, role):
     win = ttk.Toplevel(parent)
     win.title("Clinic Announcements")
@@ -1260,7 +1045,6 @@ def open_announcements_dashboard(parent, role):
                bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Search By Date
-
 def open_search_by_date_dashboard(parent):
     win = ttk.Toplevel(parent)
     win.title("Search by Date")
@@ -1278,6 +1062,7 @@ def open_search_by_date_dashboard(parent):
     cols   = ("ID", "Name", "Age", "Category", "Arrived", "Status")
     widths = [80,   160,    50,    100,        80,        90]
     tree = ttk.Treeview(win, columns=cols, show="headings", height=14)
+
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, stretch=True)
@@ -1292,8 +1077,11 @@ def open_search_by_date_dashboard(parent):
         results = search_by_date(dv.get().strip())
         for p in results:
             status = "Waiting" if p in patients else "Served"
-            tree.insert("", END, values=(p["id"], p["name"], p["age"],
+            tree.insert("", END, values=(p["id"], 
+                                         p["name"], 
+                                         p["age"],
                         p["category"], p["arrived"], status))
+            
         info.config(text=f"{len(results)} record(s) found." if results
                     else "No records found for this date.")
 
@@ -1304,7 +1092,6 @@ def open_search_by_date_dashboard(parent):
                bootstyle="secondary-outline", width=10).pack(pady=6)
 
 # Absent Patient Dashboard
-
 def open_absent_dashboard(parent, update_stats_cb=None):
     win = ttk.Toplevel(parent)
     win.title("Absent / Missed Patients")
@@ -1340,8 +1127,12 @@ def open_absent_dashboard(parent, update_stats_cb=None):
             tree.insert("", END, values=("-", "No absent patients", "-", "-", "-", "-", "-"))
             return
         for p in absent:
-            tree.insert("", END, values=(p["id"], p["name"], p["age"],
-                        p["category"], p["arrived"], p["complaint"], "Absent"))
+            tree.insert("", END, values=(p["id"], 
+                                         p["name"], 
+                                         p["age"],
+                        p["category"], 
+                        p["arrived"], 
+                        p["complaint"], "Absent"))
 
     def do_recall():
         sel = tree.selection()
@@ -1363,9 +1154,10 @@ def open_absent_dashboard(parent, update_stats_cb=None):
                bootstyle="success",          width=16).pack(side=LEFT, padx=6)
     ttk.Button(btn, text="Close",          command=win.destroy,
                bootstyle="secondary-outline", width=10).pack(side=LEFT, padx=6)
+    
+    # Main Window
 
 # Main Window
-
 def main_window(root, username, role):
     root.title("MediCare Patient Queue System")
     root.resizable(True, True)
@@ -1379,6 +1171,7 @@ def main_window(root, username, role):
     ttk.Label(hdr, text="MediCare Community Clinic - Sierra Leone",
               font=("Tahoma", 13, "bold"),
               bootstyle="inverse-primary").pack(side=LEFT)
+    
     ttk.Label(hdr, text=f"  {role}: {username}",
               font=("Tahoma", 11),
               bootstyle="inverse-primary").pack(side=LEFT, padx=16)
@@ -1449,6 +1242,7 @@ def main_window(root, username, role):
          ["Receptionist", "Nurse"]),
         ("Absent Patients",    "danger-outline",    lambda: open_absent_dashboard(root, update_stats),
          ["Receptionist", "Nurse"]),
+
         # Added - new feature dashboards
         ("Appointments",       "primary-outline",   lambda: open_appointment_dashboard(root),
          ["Receptionist"]),
@@ -1464,8 +1258,9 @@ def main_window(root, username, role):
 
     for label, style, cmd, allowed_roles in buttons:
         if role in allowed_roles:
-            ttk.Button(menu, text=label, command=cmd,
-                       bootstyle=style, width=28).pack(pady=5)
+            ttk.Button(menu, text=label, 
+                             command=cmd,
+                             bootstyle=style, width=28).pack(pady=5)
 
     ttk.Separator(root).pack(fill=X)
 
@@ -1490,10 +1285,3 @@ def main_window(root, username, role):
                bootstyle="danger-outline", width=12).pack(side=RIGHT, padx=10)
 
     update_stats()
-
-# Entry Point
-
-if __name__ == "__main__":
-    root = ttk.Window(themename="flatly")
-    show_login_screen(root, main_window)
-    root.mainloop()
