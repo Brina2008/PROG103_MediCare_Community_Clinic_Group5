@@ -267,7 +267,7 @@ cancellation_reasons = []
 
 def record_cancellation(pid, name, reason):
     cancellation_reasons.append({"id": pid, "name": name, "reason": reason})
-    log_activity(f"{current_user[0]} cancelled {pid} ({name}) — reason: {reason}")
+    log_activity(f"{current_user[0]} cancelled {pid} ({name}) - reason: {reason}")
 
 # Added - Daily Report Export (plain text summary)
 def export_daily_report():
@@ -303,7 +303,7 @@ def make_tree(parent, cols, widths, heading_bg="#1a4f8a", rowheight=26,
     style_name = f"T{id(cols)}.Treeview"
     s = ttk.Style()
     s.configure(f"{style_name}.Heading", background=heading_bg, foreground="white",
-                font=("Tahoma", 10, "bold"), relief="flat")
+                font=("Tahoma", 11, "bold"), relief="flat")
     s.map(f"{style_name}.Heading", background=[("active", heading_bg)])
     s.configure(style_name, rowheight=rowheight)
 
@@ -410,12 +410,12 @@ def show_login_screen(root, on_success):
     win = ttk.Frame(root)
     win.pack(fill=BOTH, expand=True)
 
-    ttk.Label(win, text="Welcome to MediCare SDG 3",
-              font=("Tahoma", 16, "bold"), bootstyle="primary").pack(pady=(36, 2))
+    ttk.Label(win, text="Welcome to MediCare",
+              font=("Tahoma", 17, "bold"), bootstyle="primary").pack(pady=(36, 2))
     ttk.Label(win, text="Patient Queue System",
-              font=("Tahoma", 13), bootstyle="primary").pack()
+              font=("Tahoma", 14), bootstyle="primary").pack()
     ttk.Label(win, text="Receptionist & Nurse Staff Login",
-              font=("Tahoma", 10), bootstyle="secondary").pack(pady=(6, 18))
+              font=("Tahoma", 11), bootstyle="secondary").pack(pady=(6, 18))
     ttk.Separator(win).pack(fill=X, padx=40, pady=(0, 20))
 
     frm = ttk.Frame(win, padding=(40, 0)); frm.pack()
@@ -424,17 +424,17 @@ def show_login_screen(root, on_success):
     rv = tk.StringVar(value="Receptionist")
 
     for i, (lbl, var, show) in enumerate([("Username", uv, ""), ("Password", pv, "*")]):
-        ttk.Label(frm, text=f"{lbl}:", font=("Tahoma", 11)).grid(
+        ttk.Label(frm, text=f"{lbl}:", font=("Tahoma", 12)).grid(
             row=i, column=0, sticky=W, pady=12)
         ttk.Entry(frm, textvariable=var, show=show, width=28,
-                  font=("Tahoma", 11)).grid(row=i, column=1, pady=12, padx=(12, 0))
+                  font=("Tahoma", 12)).grid(row=i, column=1, pady=12, padx=(12, 0))
 
-    ttk.Label(frm, text="Role:", font=("Tahoma", 11)).grid(row=2, column=0, sticky=W, pady=12)
+    ttk.Label(frm, text="Role:", font=("Tahoma", 12)).grid(row=2, column=0, sticky=W, pady=12)
     ttk.Combobox(frm, textvariable=rv, width=26, state="readonly",
                  values=["Receptionist", "Nurse"],
-                 font=("Tahoma", 11)).grid(row=2, column=1, pady=12, padx=(12, 0))
+                 font=("Tahoma", 12)).grid(row=2, column=1, pady=12, padx=(12, 0))
 
-    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 9), wraplength=380)
+    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10), wraplength=380)
     err.grid(row=3, column=0, columnspan=2, pady=8)
 
     def do_login():
@@ -492,7 +492,7 @@ def open_edit_dashboard(parent, update_stats_cb=None):
     win.grab_set()
 
     ttk.Label(win, text="Edit or Delete Patient Record",
-              font=("Tahoma", 12, "bold")).pack(pady=10)
+              font=("Tahoma", 13, "bold")).pack(pady=10)
     ttk.Separator(win).pack(fill=X, padx=10)
 
     top = ttk.Frame(win, padding=(16, 10)); top.pack(fill=X)
@@ -559,7 +559,7 @@ def open_edit_dashboard(parent, update_stats_cb=None):
         pid  = found[0]["id"]
         name = found[0]["name"]
         if not messagebox.askyesno("Confirm Delete",
-            f"Delete {pid} — {name}?\nThis cannot be undone"):
+            f"Delete {pid} - {name}?\nThis cannot be undone"):
             return
 
         reason_win = ttk.Toplevel(win)
@@ -568,7 +568,7 @@ def open_edit_dashboard(parent, update_stats_cb=None):
         reason_win.grab_set()
 
         ttk.Label(reason_win, text=f"Reason for deleting {pid}:",
-                  font=("Tahoma", 10, "bold")).pack(pady=(14, 6))
+                  font=("Tahoma", 11, "bold")).pack(pady=(14, 6))
         reason_var = tk.StringVar(value="Patient request")
         ttk.Combobox(reason_win, textvariable=reason_var, width=30, state="readonly",
                      values=["Patient request", "Duplicate entry", "Wrong information",
@@ -581,7 +581,7 @@ def open_edit_dashboard(parent, update_stats_cb=None):
         def confirm_delete():
             full_reason = reason_var.get()
             if note_var.get().strip():
-                full_reason += f" — {note_var.get().strip()}"
+                full_reason += f" - {note_var.get().strip()}"
             delete_patient(pid)
             record_cancellation(pid, name, full_reason)
             messagebox.showinfo("Deleted", f"Patient {pid} removed.\nReason: {full_reason}")
@@ -610,7 +610,7 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     win.title("Live Queue")
     win.geometry("1100x680")
 
-    ttk.Label(win, text="Waiting Queue", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Waiting Queue", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10)
 
@@ -636,7 +636,7 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
 
     s = ttk.Style()
     s.configure("Queue.Treeview.Heading", background="#1a4f8a", foreground="white",
-                font=("Tahoma", 10, "bold"), relief="flat")
+                font=("Tahoma", 11, "bold"), relief="flat")
     s.map("Queue.Treeview.Heading", background=[("active", "#1a4f8a")])
     tree.configure(style="Queue.Treeview")
     tree.tag_configure("next",  background="#c8f0d4", foreground="#1a4731")
@@ -644,7 +644,7 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     tree.tag_configure("preg",  background="#d6eaf8", foreground="#1a3a5c")
 
     ttk.Label(win, text="Green = Next   Red = Emergency   Blue = Pregnant",
-              font=("Tahoma", 9), bootstyle="secondary").pack(anchor=W, padx=12)
+              font=("Tahoma", 10), bootstyle="secondary").pack(anchor=W, padx=12)
    
     alert_lbl = ttk.Label(win, text="", font=("Tahoma", 9, "bold"), bootstyle="danger")
     alert_lbl.pack(anchor=W, padx=12, pady=(2, 0))
@@ -676,7 +676,7 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
             if overdue:
                 names = ", ".join(p["name"] for p in overdue)
                 alert_lbl.config(text=f"WARNING: {len(overdue)} patient(s) waiting over "
-                                       f"{WAIT_ALERT_MIN} min — {names}")
+                                       f"{WAIT_ALERT_MIN} min - {names}")
             else:
                 alert_lbl.config(text="")
         if win.winfo_exists():
@@ -711,17 +711,17 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     def open_assign_nurse():
         sel = tree.selection()
         if not sel:
-            messagebox.showinfo("No Selection", "Select a patient row first."); return
+            messagebox.showinfo("No Selection", "Select a patient row first"); return
         values = tree.item(sel[0], "values")
         pid = values[1]
         if pid in ("-",):
-            messagebox.showinfo("No Selection", "Select a patient row first."); return
+            messagebox.showinfo("No Selection", "Select a patient row first"); return
 
         dlg = ttk.Toplevel(win)
         dlg.title("Assign Nurse")
         dlg.geometry("340x180")
         dlg.grab_set()
-        ttk.Label(dlg, text=f"Assign nurse to {pid}", font=("Tahoma", 11, "bold")).pack(pady=12)
+        ttk.Label(dlg, text=f"Assign nurse to {pid}", font=("Tahoma", 12, "bold")).pack(pady=12)
         nv = tk.StringVar()
         ttk.Entry(dlg, textvariable=nv, width=24).pack(pady=6)
 
@@ -776,7 +776,7 @@ def open_register_dashboard(parent, on_done):
     win.grab_set()
 
     ttk.Label(win, text="Register New Patient",
-              font=("Tahoma", 12, "bold")).pack(pady=10)
+              font=("Tahoma", 13, "bold")).pack(pady=10)
     ttk.Separator(win).pack(fill=X, padx=10)
 
     frm = ttk.Frame(win, padding=16); frm.pack(fill=BOTH, expand=True)
@@ -809,7 +809,7 @@ def open_register_dashboard(parent, on_done):
     cat_cb.grid(row=6, column=1, pady=5, padx=(8, 0))
 
     # Error label row 7
-    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 9))
+    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10))
     err.grid(row=7, column=0, columnspan=2, pady=2)
 
     def on_gender_change(*_):
@@ -858,7 +858,7 @@ def open_search_dashboard(parent):
     win.title("Search Patient")
     win.geometry("1100x680")
 
-    ttk.Label(win, text="Search Patient", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Search Patient", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -885,7 +885,7 @@ def open_search_dashboard(parent):
 
     s2 = ttk.Style()
     s2.configure("Search.Treeview.Heading", background="#0d6eaa", foreground="white",
-                 font=("Tahoma", 10, "bold"), relief="flat")
+                 font=("Tahoma", 11, "bold"), relief="flat")
     s2.map("Search.Treeview.Heading", background=[("active", "#0d6eaa")])
     s2.configure("Search.Treeview", rowheight=26)
     tree = ttk.Treeview(frame, columns=cols, show="headings",
@@ -939,7 +939,7 @@ def open_served_dashboard(parent, role="Nurse"):
     win.geometry("1100x660")
 
     ttk.Label(win, text=f"Served Today - {len(served)} patient(s)",
-              font=("Tahoma", 13, "bold"), bootstyle="success").pack(pady=(10, 2))
+              font=("Tahoma", 14, "bold"), bootstyle="success").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
     cols   = ("ID", "Name", "Age", "Category", "Arrived", "Complaint")
@@ -1029,7 +1029,7 @@ def open_summary_dashboard(parent):
     win.title("Summary")
     win.geometry("600x620")
 
-    ttk.Label(win, text="Today's Summary", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Today's Summary", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 10))
 
@@ -1046,7 +1046,7 @@ def open_summary_dashboard(parent):
 
     s = ttk.Style()
     s.configure("Summary.Treeview.Heading", background="#2c3e6b", foreground="white",
-                font=("Tahoma", 10, "bold"), relief="flat")
+                font=("Tahoma", 11, "bold"), relief="flat")
     s.map("Summary.Treeview.Heading", background=[("active", "#2c3e6b")])
     s.configure("Summary.Treeview", rowheight=28)
 
@@ -1109,7 +1109,7 @@ def open_appointment_dashboard(parent):
     win.title("Appointment Scheduling")
     win.geometry("760x560")
 
-    ttk.Label(win, text="Book & View Appointments", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Book & View Appointments", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1126,7 +1126,7 @@ def open_appointment_dashboard(parent):
         ttk.Label(frm, text=f"{lbl}:").grid(row=i, column=0, sticky=W, pady=4)
         ttk.Entry(frm, textvariable=var, width=30).grid(row=i, column=1, pady=4, padx=(8, 0))
 
-    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 9))
+    err = ttk.Label(frm, text="", bootstyle="danger", font=("Tahoma", 10))
     err.grid(row=5, column=0, columnspan=2, pady=4)
 
     cols = ("Name", "Contact", "Date", "Time", "Note", "Booked By")
@@ -1168,7 +1168,7 @@ def open_activity_log_dashboard(parent):
     win.title("Staff Activity Log")
     win.geometry("600x560")
 
-    ttk.Label(win, text="Staff Activity Log", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Staff Activity Log", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1191,7 +1191,7 @@ def open_visit_history_dashboard(parent):
     win.title("Visit History")
     win.geometry("700x560")
 
-    ttk.Label(win, text="Patient Visit History", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Patient Visit History", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1223,7 +1223,7 @@ def open_announcements_dashboard(parent, role):
     win.title("Clinic Announcements")
     win.geometry("520x480")
 
-    ttk.Label(win, text="Clinic Announcements", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Clinic Announcements", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1266,7 +1266,7 @@ def open_search_by_date_dashboard(parent):
     win.title("Search by Date")
     win.geometry("900x560")
 
-    ttk.Label(win, text="Search Patients by Registration Date", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Search Patients by Registration Date", font=("Tahoma", 14, "bold"),
               bootstyle="primary").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1310,7 +1310,7 @@ def open_absent_dashboard(parent, update_stats_cb=None):
     win.title("Absent / Missed Patients")
     win.geometry("900x560")
 
-    ttk.Label(win, text="Patients Who Missed Their Turn", font=("Tahoma", 13, "bold"),
+    ttk.Label(win, text="Patients Who Missed Their Turn", font=("Tahoma", 14, "bold"),
               bootstyle="danger").pack(pady=(10, 2))
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
@@ -1319,7 +1319,7 @@ def open_absent_dashboard(parent, update_stats_cb=None):
 
     s = ttk.Style()
     s.configure("Absent.Treeview.Heading", background="#a83232", foreground="white",
-                font=("Tahoma", 10, "bold"), relief="flat")
+                font=("Tahoma", 11, "bold"), relief="flat")
     s.map("Absent.Treeview.Heading", background=[("active", "#a83232")])
 
     frame = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
@@ -1367,7 +1367,7 @@ def open_absent_dashboard(parent, update_stats_cb=None):
 # Main Window
 
 def main_window(root, username, role):
-    root.title("MediCare SDG 3 Patient Queue System")
+    root.title("MediCare Patient Queue System")
     root.resizable(True, True)
     try:    root.state("zoomed")
     except: root.attributes("-zoomed", True)
@@ -1377,12 +1377,12 @@ def main_window(root, username, role):
     hdr = ttk.Frame(root, bootstyle="primary", padding=(14, 8))
     hdr.pack(fill=X)
     ttk.Label(hdr, text="MediCare Community Clinic - Sierra Leone",
-              font=("Tahoma", 12, "bold"),
+              font=("Tahoma", 13, "bold"),
               bootstyle="inverse-primary").pack(side=LEFT)
     ttk.Label(hdr, text=f"  {role}: {username}",
-              font=("Tahoma", 10),
+              font=("Tahoma", 11),
               bootstyle="inverse-primary").pack(side=LEFT, padx=16)
-    clk = ttk.Label(hdr, text="", font=("Tahoma", 10),
+    clk = ttk.Label(hdr, text="", font=("Tahoma", 11),
                     bootstyle="inverse-primary")
     clk.pack(side=RIGHT)
 
@@ -1403,9 +1403,9 @@ def main_window(root, username, role):
     def make_card(parent, label, value, style):
         card = ttk.Frame(parent, bootstyle=style, padding=(14, 6))
         card.pack(side=LEFT, padx=(0, 12))
-        ttk.Label(card, text=label, font=("Tahoma", 9),
+        ttk.Label(card, text=label, font=("Tahoma", 10),
                   bootstyle=f"inverse-{style}").pack()
-        lbl = ttk.Label(card, text=str(value), font=("Tahoma", 14, "bold"),
+        lbl = ttk.Label(card, text=str(value), font=("Tahoma", 15, "bold"),
                         bootstyle=f"inverse-{style}")
         lbl.pack()
         return lbl
@@ -1427,10 +1427,10 @@ def main_window(root, username, role):
     menu.pack(fill=BOTH, expand=True)
 
     ttk.Label(menu, text="Patient Queue Management",
-              font=("Tahoma", 15, "bold"),
+              font=("Tahoma", 16, "bold"),
               bootstyle="primary").pack(pady=(0, 6))
     ttk.Label(menu, text="Use the options below to manage the clinic queue",
-              font=("Tahoma", 10),
+              font=("Tahoma", 11),
               bootstyle="secondary").pack(pady=(0, 14))
 
     # Role-based access - each button lists which roles can see it
