@@ -1159,7 +1159,7 @@ def open_absent_dashboard(parent, update_stats_cb=None):
 
 # Main Window
 def main_window(root, username, role):
-    root.title("MediCare Patient Queue System")
+    root.title("MediCare Patient Queue Management System")
     root.resizable(True, True)
     try:    root.state("zoomed")
     except: root.attributes("-zoomed", True)
