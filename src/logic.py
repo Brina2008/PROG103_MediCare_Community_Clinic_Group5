@@ -105,7 +105,7 @@ def update_patient(pid, name, age, gender, contact, complaint, arrived, category
 
 def delete_patient(pid):
     global patients
-    patients = [p for p in patients if p["id"] != pid]
+    patients[:] = [p for p in patients if p["id"] != pid]
     reorder_queue() 
 
 def make_id():
@@ -254,7 +254,7 @@ def mark_absent(pid):
         return False
     target["status"] = "Absent"
     absent.append(target)
-    patients = [p for p in patients if p["id"] != pid]
+    patients[:] = [p for p in patients if p["id"] != pid]
     reorder_queue()
     log_activity(f"{current_user[0]} marked {pid} ({target['name']}) as absent")
     return True
@@ -267,7 +267,7 @@ def recall_patient(pid):
     target["status"] = "Waiting"
     patients.append(target)
     sort_patients()
-    absent = [p for p in absent if p["id"] != pid]
+    absent[:] = [p for p in absent if p["id"] != pid]
     log_activity(f"{current_user[0]} recalled {pid} ({target['name']})")
     return True
 

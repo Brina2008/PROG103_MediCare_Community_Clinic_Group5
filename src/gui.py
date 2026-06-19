@@ -412,6 +412,8 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
         if not messagebox.askyesno("Call Next",
             f"Call: {p['name']}  ({p['category']})\nComplaint: {p['complaint']}"): return
         called = call_next_patient()
+        if called is None:
+            messagebox.showwarning("Queue Empty", "No patient available to call"); return
         log_activity(f"{current_user[0]} called {called['id']} ({called['name']})")
         nxt = (f"Next: {patients[0]['name']} ({patients[0]['category']})"
                
