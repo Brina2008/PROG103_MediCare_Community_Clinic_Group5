@@ -19,6 +19,7 @@ current_user   = [""]
 absent        = []   
 last_called = [None]
 
+# Patient registration & sorting
 def register_patient_full(name, age, gender, contact, complaint, arrived, category):
     pid = make_id()
     patients.append({
@@ -38,9 +39,19 @@ def register_patient_full(name, age, gender, contact, complaint, arrived, catego
     sort_patients()
     return pid
 
+def make_id():
+    pid = f"P-{counter[0]:03d}"
+    counter[0] += 1
+    return pid
+
+def reorder_queue():    
+    for i, p in enumerate(patients, 1):
+        p["queue_no"] = i
+
 def sort_patients():
     patients.sort(key=lambda p: (PRIORITY[p["category"]], p["arrived"]))
 
+# Staff accounts
 def save_staff_accounts():    
     with open(STAFF_FILE, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["username", 
@@ -62,12 +73,9 @@ def load_staff_accounts():
             staff_accounts[row["username"]] = {
                 "password_hash": row["password_hash"],
                 "role":          row["role"]
-            }
+            }   
 
-def reorder_queue():    
-    for i, p in enumerate(patients, 1):
-        p["queue_no"] = i
-
+# Queue operations    
 def call_next_patient():
     if not patients:
         return None
@@ -106,13 +114,8 @@ def update_patient(pid, name, age, gender, contact, complaint, arrived, category
 def delete_patient(pid):
     global patients
     patients[:] = [p for p in patients if p["id"] != pid]
-    reorder_queue() 
-
-def make_id():
-    pid = f"P-{counter[0]:03d}"
-    counter[0] += 1
-    return pid
-
+    reorder_queue()          
+      
 def find_by_id(pid):
     for p in patients + served:
         if p["id"] == pid.upper().strip():
@@ -124,6 +127,7 @@ def search_patients(term):
     return [p for p in patients + served
             if term in p["id"].lower() or term in p["name"].lower()]
 
+# Summaries
 def queue_summary():
     counts = {"Emergency": 0, "Pregnant": 0, "Normal": 0}
     for p in patients:
