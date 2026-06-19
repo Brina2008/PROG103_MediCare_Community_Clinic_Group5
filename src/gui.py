@@ -14,7 +14,8 @@ def show_login_screen(root, on_success):
     load_staff_accounts()  
     load_activity_log()     
     load_appointments()     
-    load_announcements()    
+    load_announcements()
+    load_session() #  Added for exporting file after exisiting the program    
 
     root.title("MediQueue - Staff Login")
     root.geometry("600x640")
@@ -1270,11 +1271,13 @@ def main_window(root, username, role):
 
     def on_exit():
         if messagebox.askyesno("Exit", "Exit MediQueue?"):
+            save_session() # Added this
             auto_backup()
             root.destroy()
 
     def do_logout():
         if messagebox.askyesno("Logout", "Log out and return to the login screen?"):
+            save_session() # Added this for saving when exisiting the program
             log_activity(f"{current_user[0]} logged out")
             current_user[0] = ""
             for widget in root.winfo_children():

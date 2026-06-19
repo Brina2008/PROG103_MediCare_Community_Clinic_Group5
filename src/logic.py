@@ -297,6 +297,16 @@ def export_daily_report():
         f.write(f"Absent    : {len(absent)}\n")
     return filename
 
+SESSION_FILE = "session_backup.csv"
+
+def save_session():
+    save_to_csv(SESSION_FILE)
+
+def load_session():
+    if not os.path.exists(SESSION_FILE):
+        return
+    import_backup(SESSION_FILE)
+
 def save_to_csv(filename):
     with open(filename, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
