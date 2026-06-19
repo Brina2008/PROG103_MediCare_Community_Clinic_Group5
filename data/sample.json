@@ -1,0 +1,32 @@
+[
+  {
+    "id": "P-001",
+    "name": "Sabrina Kandeh",
+    "age": 18,
+    "gender": "Female",
+    "contact": "076123456",
+    "complaint": "Asthma",
+    "category": "Normal",
+    "status": "Waiting"
+  },
+  {
+    "id": "P-002",
+    "name": "Ameynor Salma Kamara",
+    "age": 20,
+    "gender": "Female",
+    "contact": "078987654",
+    "complaint": "Dizziness",
+    "category": "Normal",
+    "status": "Waiting"
+  },
+  {
+    "id": "P-002",
+    "name": "Alfreda V Dumbuya",
+    "age": 17,
+    "gender": "Female",
+    "contact": "078987654",
+    "complaint": "Period Pain",
+    "category": "Emergency",
+    "status": "Waiting"
+  }
+]

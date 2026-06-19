@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+
+staff_accounts.csv
+activity_log.csv
+appointments.csv
+announcements.txt
+
+export.csv
+served_patients.csv
+backup_*.csv
+
+.venv/
+venv/
+
+.vscode/
