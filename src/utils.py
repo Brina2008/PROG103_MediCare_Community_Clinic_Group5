@@ -1,20 +1,20 @@
 from datetime import datetime
 import hashlib
 
-
+# Constants
 PRIORITY = {"Emergency": 1, "Pregnant": 2, "Normal": 3}
 AVG_MIN = 5
-WAIT_ALERT_MIN = 45  
-
+WAIT_ALERT_MIN = 45   
 STAFF_FILE     = "staff_accounts.csv"
 ACTIVITY_FILE      = "activity_log.csv"
 ANNOUNCEMENTS_FILE = "announcements.txt"
 APPOINTMENTS_FILE  = "appointments.csv"
+SESSION_FILE  = "Session_backup.csv"
 
 FIELDNAMES = ["id", "name", 
               "age", "gender", 
               "contact", "complaint",
-              "arrived", "category", ""
+              "arrived", "category",
               "queue_no", "status"]
 
 APPT_FIELDS = ["name", "contact", "date", "time", "note", "booked_by"]
