@@ -5,7 +5,7 @@ from tkinter import messagebox
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 
-# Import all the functions and data structure from logic
+# Import all the functions and data structure from logic utils
 from logic import *
 from utils import *
 
