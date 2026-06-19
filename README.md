@@ -1,4 +1,4 @@
-# 🏥 MediQueue - Patient Queue Management System
+# 🏥 MediQueue - Patient Management System
 
 MediQueue is a Python GUI application that helps manage patient queues efficiently while supporting SDG 3 (Good Health and Well-being).
 
