@@ -10,6 +10,10 @@ export.csv
 served_patients.csv
 backup_*.csv
 
+gui.cpython-313.pyc
+logic.cpython-313.pyc
+utils.cpython-313.pyc
+
 .venv/
 venv/
 
