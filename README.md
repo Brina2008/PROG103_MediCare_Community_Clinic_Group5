@@ -108,23 +108,23 @@ MediQueue supports quality healthcare delivery by improving patient organization
 
 *  Login Screen Page
 
-<img src="./screenshots/Screenshot 2026-06-20 025926.png" alt="login" width="500" >
+<img src="./screenshots/Screenshot 2026-06-20 025926.png" alt="login" width="600" >
 
 * Receptionist login Dashboard page
 
-<img src="./screenshots/Screenshot 2026-06-19 065254.png" alt="Rectionist" width="500">
+<img src="./screenshots/Screenshot 2026-06-19 065254.png" alt="Rectionist" width="600">
 
 * Patient Register page
 
-<img src="./screenshots/Screenshot 2026-06-19 064304.png" alt="patient register" width="500">
+<img src="./screenshots/Screenshot 2026-06-19 064304.png" alt="patient register" width="600">
 
 * Patient Served summary Queue Page
 
-<img src="./screenshots/Screenshot 2026-06-19 070349.png" alt="patient summary" width="500">
+<img src="./screenshots/Screenshot 2026-06-19 070349.png" alt="patient summary" width="600">
 
 * Nurse login Page
 
-<img src="./screenshots/Screenshot 2026-06-19 065716.png" alt="nurse" width="500">
+<img src="./screenshots/Screenshot 2026-06-19 065716.png" alt="nurse" width="600">
 
 
 ## 🔒 Validation Features
