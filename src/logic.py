@@ -1,8 +1,11 @@
-"""All """
+"""All Core Logic Functions for the Patient Queue Management System"""
+
+# Import Required Modules and Utilities
 import csv, os
 from tkinter import messagebox
 from datetime import datetime
 
+# # Import Utility Functions and Constants
 from utils import *
 
 # In-Memory Data
