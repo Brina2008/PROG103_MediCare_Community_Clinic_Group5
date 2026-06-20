@@ -335,7 +335,7 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
                  values=["All", "Emergency", "Pregnant", "Normal"]).pack(side=LEFT)
 
     cols   = ("#", "ID", "Name", "Age", "Category", "Arrived", "Complaint", "Est. Wait", "Nurse")
-    widths = [50,   70,   150,    50,    100,        80,        160,          90,        100]
+    widths = [40,   70,   180,    45,      100,        80,        200,          80,        110]
 
     frame = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
     tree = ttk.Treeview(frame, 
@@ -346,8 +346,10 @@ def open_queue_dashboard(parent, update_stats_cb=None, role="Nurse"):
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, minwidth=50, stretch=True)
+        
     tree.column("Name",      anchor=W, stretch=True)
-    tree.column("Complaint", anchor=W, stretch=True)
+   #
+
     sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
     tree.configure(yscrollcommand=sb.set)
     tree.pack(side=LEFT, fill=BOTH, expand=True); sb.pack(side=LEFT, fill=Y)
@@ -621,7 +623,7 @@ def open_search_dashboard(parent):
                  values=["All", "Waiting", "Served"]).pack(side=LEFT)
 
     cols   = ("ID", "Name", "Age", "Category", "Arrived", "Complaint", "Status")
-    widths = [90,   150,    60,    110,        90,        160,         80]
+    widths = [80,    180,    55,      110,        90,        210,         75]
     frame  = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10, pady=8)
 
     s2 = ttk.Style()
@@ -641,9 +643,9 @@ def open_search_dashboard(parent):
     
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
-        tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
-    tree.column("Name",      anchor=W, stretch=True)
-    tree.column("Complaint", anchor=W, stretch=True)
+        tree.column(c,  anchor=CENTER, minwidth=60, stretch=True)
+    tree.column("Name",      stretch=True)
+    tree.column("Complaint",  stretch=True)
 
     sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
     tree.configure(yscrollcommand=sb.set)
@@ -700,7 +702,7 @@ def open_served_dashboard(parent, role="Nurse"):
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
     cols   = ("ID", "Name", "Age", "Category", "Arrived", "Complaint")
-    widths = [90,   150,    60,    110,        90,        200]
+    widths = [80,    180,    50,     120,         80,        260]
     frame  = ttk.Frame(win); frame.pack(fill=BOTH, expand=True, padx=10)
 
     s3 = ttk.Style()
@@ -721,8 +723,8 @@ def open_served_dashboard(parent, role="Nurse"):
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, minwidth=60, stretch=True)
-    tree.column("Name",      anchor=W, stretch=True)
-    tree.column("Complaint", anchor=W, stretch=True)
+    tree.column("Name",      stretch=True)
+    tree.column("Complaint",  stretch=True)
 
     tree.tag_configure("odd",  background="#f7fbf7", foreground="#1a1a1a")
     tree.tag_configure("even", background="#e8f5e9", foreground="#1a1a1a")
@@ -914,7 +916,7 @@ def open_appointment_dashboard(parent):
 
     for c in cols:
         tree.heading(c, text=c)
-        tree.column(c, width=110, anchor=W, stretch=True)
+        tree.column(c, width=120, anchor=W, stretch=True)
     tree.pack(fill=BOTH, expand=True, padx=10, pady=8)
 
     def refresh_list():
@@ -990,9 +992,9 @@ def open_visit_history_dashboard(parent):
 
     cols = ("Patient Name", "Total Visits")
     tree = ttk.Treeview(win, columns=cols, show="headings", height=16)
-    tree.heading("Patient Name",  text="Patient Name")
-    tree.heading("Total Visits",  text="Total Visits")
-    tree.column("Patient Name",  width=300, anchor=W,      stretch=True)
+    tree.heading("Patient Name",  text="Patient Name", anchor=CENTER)
+    tree.heading("Total Visits",  text="Total Visits", anchor=CENTER)
+    tree.column("Patient Name",  width=300, anchor=CENTER,      stretch=True)
     tree.column("Total Visits",  width=120, anchor=CENTER, stretch=True)
     tree.pack(fill=BOTH, expand=True, padx=10, pady=8)
 
@@ -1105,7 +1107,7 @@ def open_absent_dashboard(parent, update_stats_cb=None):
     ttk.Separator(win).pack(fill=X, padx=10, pady=(0, 8))
 
     cols   = ("ID", "Name", "Age", "Category", "Arrived", "Complaint", "Status")
-    widths = [80,   150,    50,    100,        80,        180,         80]
+    widths = [80,   180,    50,       150,        85,        200,         80]
 
     s = ttk.Style()
     s.configure("Absent.Treeview.Heading", background="#a83232", foreground="white",
@@ -1118,8 +1120,8 @@ def open_absent_dashboard(parent, update_stats_cb=None):
     for c, w in zip(cols, widths):
         tree.heading(c, text=c)
         tree.column(c, width=w, anchor=CENTER, stretch=True)
-    tree.column("Name",      anchor=W, stretch=True)
-    tree.column("Complaint", anchor=W, stretch=True)
+    tree.column("Name",       stretch=True)
+    tree.column("Complaint",  stretch=True)
     sb = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
     tree.configure(yscrollcommand=sb.set)
     tree.pack(side=LEFT, fill=BOTH, expand=True); sb.pack(side=LEFT, fill=Y)
@@ -1270,7 +1272,7 @@ def main_window(root, username, role):
     foot = ttk.Frame(root, padding=(10, 6)); foot.pack(fill=X)
 
     def on_exit():
-        if messagebox.askyesno("Exit", "Exit MediQueue?"):
+        if messagebox.askyesno("Exit", "Do you want to exit MediQueue?"):
             save_session() # Added this
             auto_backup()
             root.destroy()
