@@ -104,7 +104,7 @@ MediQueue supports quality healthcare delivery by improving patient organization
 * Data Export: CSV Files
 * License: MIT
 
-## Screen Shot
+## 📸 Screenshots
 
 *  Login Screen Page
 
