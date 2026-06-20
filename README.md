@@ -164,6 +164,4 @@ cd src
 ```bash
 python main.py
 ```
-
-
-                                      **MediQueue - Improving Patient Flow for Better Healthcare in Sierra Leone 🇸🇱**
+ 
