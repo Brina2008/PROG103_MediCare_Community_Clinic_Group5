@@ -1,3 +1,6 @@
+"""Utility Functions and Constants Module"""
+
+# Import Required Modules
 from datetime import datetime
 import hashlib
 

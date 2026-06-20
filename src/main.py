@@ -1,5 +1,6 @@
 """ Patient Queue Management System - MediCare Community Clinic, Sierra Leone"""
 
+# Import GUI Components
 from gui import *
 
 # Entry Point
