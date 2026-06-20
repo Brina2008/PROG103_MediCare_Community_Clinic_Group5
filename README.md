@@ -76,17 +76,16 @@ MediQueue supports quality healthcare delivery by improving patient organization
 
 * CSV Export functionality
 * Automatic daily backup generation
-* In-memory storage using Python lists and dictionaries
-
-
-
+* In-memory storage using Python lists and dictionaries     
+     
+  
+ 
 ## 🌍 Real-World Impact
 
 * Reducing patient waiting times
 * Improving queue organization
 * Prioritizing emergency cases
 * Enhancing healthcare service delivery
-
 
 
 ## 👥 Authors
@@ -105,19 +104,59 @@ MediQueue supports quality healthcare delivery by improving patient organization
 * Data Export: CSV Files
 * License: MIT
 
+## Screen Shot
 
+*  Login Screen Page
+
+<img src="./screenshots/Screenshot 2026-06-20 025926.png" alt="login" width="500" >
+
+* Receptionist login Dashboard page
+
+<img src="./screenshots/Screenshot 2026-06-19 065254.png" alt="Rectionist" width="500">
+
+* Patient Register page
+
+<img src="./screenshots/Screenshot 2026-06-19 064304.png" alt="patient register" width="500">
+
+* Patient Served summary Queue Page
+
+<img src="./screenshots/Screenshot 2026-06-19 070349.png" alt="patient summary" width="500">
+
+* Nurse login Page
+
+<img src="./screenshots/Screenshot 2026-06-19 065716.png" alt="nurse" width="500">
+
+
+## 🔒 Validation Features
+
+The system validates:
+
+* Patient names
+* Age range (0–120)
+* Contact numbers
+* Complaint descriptions
+* Time format (HH:MM)
+* Category selection
+
+This helps maintain data accuracy and reliability.
 
 
 ## 🚀 How to Run the Project
 
 ### 1. Install Python
 
-Ensure Python 3 is installed on your computer.
-
-### 2. Install ttkbootstrap
+Ensure Python 3 is installed on your computer, Then install the extra libaray ttkbootstrap:
 
 ```bash
 pip install ttkbootstrap
+```
+
+### 2. Download Repository
+
+```bash
+git clone https://github.com/Brina2008/PROG103_MediCare_Community_Clinic_Group5.git
+cd PROG103_MediCare_Clinic_Group5
+cd src
 ```
 
 ### 3. Run the Application
@@ -127,4 +166,4 @@ python main.py
 ```
 
 
-**MediQueue – Improving Patient Flow for Better Healthcare in Sierra Leone 🇸🇱**
+                                      **MediQueue - Improving Patient Flow for Better Healthcare in Sierra Leone 🇸🇱**
